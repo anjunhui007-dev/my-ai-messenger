@@ -10,9 +10,9 @@
         @media (min-width: 481px) { .app-container { height: 85vh; border-radius: 20px; } }
         
         /* 공통 스타일 */
-        .screen { flex: 1; display: none; flex-direction: column; overflow-y: auto; background: #ffffff; }
+        .screen { flex: 1; display: none; flex-direction: column; overflow-y: auto; background: #ffffff; position: relative; }
         .screen.active { display: flex; }
-        header { background: #fee500; padding: 15px; font-weight: bold; font-size: 18px; display: flex; justify-content: space-between; align-items: center; }
+        header { background: #fee500; padding: 15px; font-weight: bold; font-size: 18px; display: flex; justify-content: space-between; align-items: center; z-index: 2; }
         
         /* PIN 잠금 화면 */
         #pin-screen { justify-content: center; align-items: center; background: #fee500; }
@@ -21,20 +21,36 @@
         .pin-btn { background: #3b1e1e; color: white; border: none; padding: 12px 20px; border-radius: 10px; font-size: 16px; width: 100%; font-weight: bold; cursor: pointer; }
 
         /* 하단 탭 바 */
-        .nav-bar { display: flex; background: #f9f9f9; border-top: 1px solid #ddd; height: 60px; }
+        .nav-bar { display: flex; background: #f9f9f9; border-top: 1px solid #ddd; height: 60px; z-index: 2; }
         .nav-item { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 12px; color: #666; cursor: pointer; text-decoration: none; }
         .nav-item.active { color: #000; font-weight: bold; }
         .nav-icon { font-size: 20px; margin-bottom: 3px; }
 
         /* 콘텐츠 영역 */
-        .content-body { padding: 15px; flex: 1; }
+        .content-body { padding: 15px; flex: 1; overflow-y: auto; }
 
         /* 친구 목록 스타일 */
-        .friend-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
+        .friend-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
         .friend-avatar { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; background: #ddd; margin-right: 15px; }
         .friend-info { flex: 1; }
         .friend-name { font-weight: bold; font-size: 16px; color: #333; }
         .friend-status { font-size: 13px; color: #888; margin-top: 3px; }
+
+        /* 채팅방 화면 스타일 */
+        #chat-room-screen { background: #b2c7d9; } /* 카톡 배경색 연출 */
+        .chat-header { background: #b2c7d9; padding: 12px 15px; display: flex; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); font-weight: bold; }
+        .back-btn { font-size: 20px; cursor: pointer; margin-right: 15px; }
+        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        
+        /* 말풍선 스타일 */
+        .message { max-width: 70%; padding: 10px 14px; border-radius: 15px; font-size: 14px; line-height: 1.4; word-break: break-word; position: relative; }
+        .message.received { background: #ffffff; align-self: flex-start; border-top-left-radius: 3px; color: #000; }
+        .message.sent { background: #ffeb33; align-self: flex-end; border-top-right-radius: 3px; color: #000; }
+        
+        /* 채팅 입력창 */
+        .chat-input-bar { display: flex; padding: 10px; background: #f0f0f0; align-items: center; gap: 8px; }
+        .chat-input-bar input { flex: 1; padding: 10px 15px; border: none; border-radius: 20px; outline: none; font-size: 14px; }
+        .send-btn { background: #fee500; border: none; padding: 10px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 14px; }
 
         /* 모달 팝업 스타일 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 10; }
@@ -70,7 +86,7 @@
             <span style="font-size: 20px; cursor: pointer;" onclick="openAddFriendModal()">➕</span>
         </header>
         <div class="content-body" id="friendListContainer">
-            <p style="color: #888; text-align: center; margin-top: 50px;" id="noFriendMsg">등록된 친구가 없습니다.<br>우측 상단 + 버튼을 눌러 친구를 추가해보세요!</p>
+            <p style="color: #888; text-align: center; margin-top: 50px;">등록된 친구가 없습니다.<br>우측 상단 + 버튼을 눌러 친구를 추가해보세요!</p>
         </div>
     </div>
 
@@ -78,11 +94,26 @@
     <div id="chat-list-screen" class="screen">
         <header>대화</header>
         <div class="content-body">
-            <p style="color: #888; text-align: center; margin-top: 50px;">진행 중인 대화가 없습니다.</p>
+            <p style="color: #888; text-align: center; margin-top: 50px;">진행 중인 대화가 없습니다. 친구를 눌러 대화를 시작해 보세요!</p>
         </div>
     </div>
 
-    <!-- 4. 선물함 탭 -->
+    <!-- 4. 1:1 채팅방 화면 (새로 추가됨!) -->
+    <div id="chat-room-screen" class="screen">
+        <div class="chat-header">
+            <span class="back-btn" onclick="goBackToFriend()">〈</span>
+            <span id="chatRoomTitle">친구 이름</span>
+        </div>
+        <div class="chat-messages" id="chatMessagesContainer">
+            <!-- 메시지들이 여기에 동적으로 쌓입니다 -->
+        </div>
+        <div class="chat-input-bar">
+            <input type="text" id="chatInputText" placeholder="메시지를 입력하세요..." onkeypress="if(event.key === 'Enter') sendMessage()">
+            <button class="send-btn" onclick="sendMessage()">전송</button>
+        </div>
+    </div>
+
+    <!-- 5. 선물함 탭 -->
     <div id="gift-screen" class="screen">
         <header>선물함</header>
         <div class="content-body">
@@ -90,7 +121,7 @@
         </div>
     </div>
 
-    <!-- 5. 설정 탭 -->
+    <!-- 6. 설정 탭 -->
     <div id="setting-screen" class="screen">
         <header>설정</header>
         <div class="content-body">
@@ -145,8 +176,8 @@
 </div>
 
 <script>
-    // 앱 데이터 (로컬 스토리지 연동)
     let friends = JSON.parse(localStorage.getItem('my_ai_friends')) || [];
+    let currentChatFriendId = null; // 현재 대화 중인 친구 ID
 
     function checkPin() {
         const inputVal = document.getElementById('pinInput').value;
@@ -163,14 +194,13 @@
 
     function switchTab(screenId, element) {
         document.querySelectorAll('.screen').forEach(s => {
-            if(s.id !== 'pin-screen') s.classList.remove('active');
+            if(s.id !== 'pin-screen' && s.id !== 'chat-room-screen') s.classList.remove('active');
         });
         document.getElementById(screenId).classList.add('active');
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        element.classList.add('active');
+        if(element) element.classList.add('active');
     }
 
-    // 모달 제어
     function openAddFriendModal() {
         document.getElementById('friendModal').classList.add('active');
     }
@@ -178,7 +208,6 @@
         document.getElementById('friendModal').classList.remove('active');
     }
 
-    // 친구 저장 기능
     function saveFriend() {
         const name = document.getElementById('fName').value.trim();
         const status = document.getElementById('fStatus').value.trim();
@@ -201,7 +230,6 @@
         friends.push(newFriend);
         localStorage.setItem('my_ai_friends', JSON.stringify(friends));
 
-        // 입력창 초기화 및 닫기
         document.getElementById('fName').value = '';
         document.getElementById('fStatus').value = '';
         document.getElementById('fAvatar').value = '';
@@ -211,7 +239,6 @@
         renderFriends();
     }
 
-    // 친구 목록 화면에 그리기
     function renderFriends() {
         const container = document.getElementById('friendListContainer');
         if (friends.length === 0) {
@@ -223,6 +250,7 @@
         friends.forEach(f => {
             const item = document.createElement('div');
             item.className = 'friend-item';
+            item.onclick = () => openChatRoom(f.id); // 친구 누르면 채팅방 입장!
             item.innerHTML = `
                 <img src="${f.avatar}" class="friend-avatar" alt="프사">
                 <div class="friend-info">
@@ -232,6 +260,60 @@
             `;
             container.appendChild(item);
         });
+    }
+
+    // 채팅방 입장 함수
+    function openChatRoom(friendId) {
+        const friend = friends.find(f => f.id === friendId);
+        if(!friend) return;
+
+        currentChatFriendId = friendId;
+        document.getElementById('chatRoomTitle').innerText = friend.name;
+
+        // 하단 탭 숨기고 채팅방 화면 켜기
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('chat-room-screen').classList.add('active');
+        document.getElementById('navBar').style.display = 'none';
+
+        // 해당 친구와의 대화 로드 (임시 환영 인사)
+        const msgContainer = document.getElementById('chatMessagesContainer');
+        msgContainer.innerHTML = `
+            <div class="message received">안녕! 반가워 ㅎㅎ 오늘 뭐 했어?</div>
+        `;
+    }
+
+    // 뒤로가기
+    function goBackToFriend() {
+        document.getElementById('chat-room-screen').classList.remove('active');
+        document.getElementById('friend-screen').classList.add('active');
+        document.getElementById('navBar').style.display = 'flex';
+    }
+
+    // 메시지 전송 함수 (테스트용 응답 포함)
+    function sendMessage() {
+        const input = document.getElementById('chatInputText');
+        const text = input.value.trim();
+        if(!text) return;
+
+        const msgContainer = document.getElementById('chatMessagesContainer');
+
+        // 내 메시지 화면에 추가
+        const sentDiv = document.createElement('div');
+        sentDiv.className = 'message sent';
+        sentDiv.innerText = text;
+        msgContainer.appendChild(sentDiv);
+
+        input.value = '';
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+
+        // 잠시 뒤 AI 캐릭터의 가상 응답 (다음 단계에서 제미나이 API로 대체될 부분!)
+        setTimeout(() => {
+            const receivedDiv = document.createElement('div');
+            receivedDiv.className = 'message received';
+            receivedDiv.innerText = "응! 대답 잘 들었어 ㅋㅋㅋ (제미나이 API 연동 대기 중)";
+            msgContainer.appendChild(receivedDiv);
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+        }, 800);
     }
 </script>
 
