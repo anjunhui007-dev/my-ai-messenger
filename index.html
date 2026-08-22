@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나만의 AI 메신저</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .app-container { width: 100%; max-width: 480px; height: 100%; background: #ffffff; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; overflow: hidden; }
+        @media (min-width: 481px) { .app-container { height: 85vh; border-radius: 20px; } }
+        
+        /* 공통 스타일 */
+        .screen { flex: 1; display: none; flex-direction: column; overflow-y: auto; background: #ffffff; }
+        .screen.active { display: flex; }
+        header { background: #fee500; padding: 15px; font-weight: bold; font-size: 18px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* PIN 잠금 화면 */
+        #pin-screen { justify-content: center; align-items: center; background: #fee500; }
+        .pin-box { background: white; padding: 30px; border-radius: 20px; text-align: center; width: 80%; max-width: 300px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .pin-input { font-size: 24px; letter-spacing: 10px; text-align: center; width: 80%; padding: 10px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 10px; outline: none; }
+        .pin-btn { background: #3b1e1e; color: white; border: none; padding: 12px 20px; border-radius: 10px; font-size: 16px; width: 100%; font-weight: bold; cursor: pointer; }
+
+        /* 하단 탭 바 */
+        .nav-bar { display: flex; background: #f9f9f9; border-top: 1px solid #ddd; height: 60px; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 12px; color: #666; cursor: pointer; text-decoration: none; }
+        .nav-item.active { color: #000; font-weight: bold; }
+        .nav-icon { font-size: 20px; margin-bottom: 3px; }
+
+        /* 콘텐츠 영역 예시 */
+        .content-body { padding: 20px; flex: 1; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- 1. PIN 잠금 화면 -->
+    <div id="pin-screen" class="screen active">
+        <div class="pin-box">
+            <h2>🔒 잠금 해제</h2>
+            <p style="font-size: 13px; color: #666; margin-bottom: 20px;">설정된 PIN 번호를 입력하세요<br>(초기 비밀번호: 1234)</p>
+            <input type="password" id="pinInput" class="pin-input" maxlength="4" placeholder="••••">
+            <button class="pin-btn" onclick="checkPin()">확인</button>
+        </div>
+    </div>
+
+    <!-- 2. 메인 앱 화면 (탭으로 전환) -->
+    <!-- 친구 탭 -->
+    <div id="friend-screen" class="screen">
+        <header><span>친구</span> <span style="font-size: 14px; cursor: pointer;" onclick="alert('친구 추가 버튼')">➕</span></header>
+        <div class="content-body">
+            <p style="color: #888; text-align: center; margin-top: 50px;">등록된 친구가 없습니다.<br>우측 상단 + 버튼을 눌러 친구를 추가해보세요!</p>
+        </div>
+    </div>
+
+    <!-- 대화 탭 -->
+    <div id="chat-list-screen" class="screen">
+        <header>대화</header>
+        <div class="content-body">
+            <p style="color: #888; text-align: center; margin-top: 50px;">진행 중인 대화가 없습니다.</p>
+        </div>
+    </div>
+
+    <!-- 선물함 탭 -->
+    <div id="gift-screen" class="screen">
+        <header>선물함</header>
+        <div class="content-body">
+            <p style="color: #888; text-align: center; margin-top: 50px;">주고받은 가상 기프티콘이 없습니다.</p>
+        </div>
+    </div>
+
+    <!-- 설정 탭 -->
+    <div id="setting-screen" class="screen">
+        <header>설정</header>
+        <div class="content-body">
+            <h3>⚙️ 앱 설정</h3>
+            <p style="font-size: 14px; color: #556;">• 앱 타이틀 변경<br>• API 키 관리<br>• 내 인물 설정<br>• 이모티콘 팩 관리</p>
+        </div>
+    </div>
+
+    <!-- 하단 네비게이션 탭 바 (잠금 해제 후 노출) -->
+    <div class="nav-bar" id="navBar" style="display: none;">
+        <div class="nav-item active" onclick="switchTab('friend-screen', this)">
+            <span class="nav-icon">👥</span>친구
+        </div>
+        <div class="nav-item" onclick="switchTab('chat-list-screen', this)">
+            <span class="nav-icon">💬</span>대화
+        </div>
+        <div class="nav-item" onclick="switchTab('gift-screen', this)">
+            <span class="nav-icon">🎁</span>선물함
+        </div>
+        <div class="nav-item" onclick="switchTab('setting-screen', this)">
+            <span class="nav-icon">⚙️</span>설정
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // PIN 번호 확인 로직 (기본 1234)
+    function checkPin() {
+        const inputVal = document.getElementById('pinInput').value;
+        if(inputVal === "1234") {
+            document.getElementById('pin-screen').classList.remove('active');
+            document.getElementById('friend-screen').classList.add('active');
+            document.getElementById('navBar').style.display = 'flex';
+        } else {
+            alert("비밀번호가 틀렸습니다! (기본: 1234)");
+            document.getElementById('pinInput').value = "";
+        }
+    }
+
+    // 하단 탭 전환 함수
+    function switchTab(screenId, element) {
+        // 모든 화면 숨기기
+        document.querySelectorAll('.screen').forEach(s => {
+            if(s.id !== 'pin-screen') s.classList.remove('active');
+        });
+        // 선택한 화면만 켜기
+        document.getElementById(screenId).classList.add('active');
+
+        // 하단 탭 활성화 디자인 변경
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        element.classList.add('active');
+    }
+</script>
+
+</body>
+</html>
