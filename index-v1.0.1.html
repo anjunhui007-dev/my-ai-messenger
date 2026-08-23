@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>나만의 AI 메신저</title>
+<style>
+:root{
+  --bg:#f1f4f7;--card:#fff;--text:#191919;--sub:#8b9098;--line:#e8e9ed;
+  --accent:#5b74f8;--mine:#dbe6ff;--ai:#fff;--danger:#dd4747
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;background:#e9eaee;color:var(--text)}
+button,input,textarea,select{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+#app{width:min(720px,100%);height:100dvh;margin:auto;position:relative;overflow:hidden;background:#fff}
+.main-header{height:58px;display:grid;grid-template-columns:48px 1fr 48px;align-items:center;padding:0 8px;background:#fff;border-bottom:1px solid var(--line)}
+.main-header h1{margin:0;font-size:20px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-spacer{width:48px}.icon-btn{border:0;background:none;font-size:25px;padding:8px;color:var(--accent)}
+.view{display:none;height:calc(100dvh - 118px);overflow-y:auto;padding:14px}.view.active{display:block}
+.nav{position:absolute;bottom:0;left:0;right:0;height:60px;display:grid;grid-template-columns:repeat(3,1fr);background:#fff;border-top:1px solid var(--line)}
+.nav button{border:0;background:#fff;color:#90939a;font-size:12px}.nav button.active{color:var(--accent);font-weight:700}
+.friend-row,.chat-row{display:flex;align-items:center;gap:12px;padding:13px 5px;border-bottom:1px solid #f0f1f3}
+.avatar{width:52px;height:52px;border-radius:50%;background:#e9edff;display:flex;align-items:center;justify-content:center;overflow:hidden;font-weight:800;flex:none}
+.avatar img{width:100%;height:100%;object-fit:cover}.row-info{min-width:0;flex:1}.row-info strong,.row-info small{display:block}
+.row-info small{margin-top:4px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.empty{text-align:center;color:#999;padding:70px 20px}
+.card{background:#fafafa;border-radius:16px;padding:15px;margin-bottom:13px}.card h3{margin:0 0 12px}.card label,.form-label{display:block;margin:11px 0}
+input,textarea,select{width:100%;border:1px solid #dfe1e5;border-radius:11px;padding:10px;background:#fff;margin-top:5px;outline:none}
+textarea{resize:vertical}.check{display:flex!important;align-items:center;gap:8px}.check input{width:auto;margin:0}
+.primary,.secondary,.danger{border-radius:11px;padding:10px 14px}.primary{border:0;background:var(--accent);color:#fff}
+.secondary{border:1px solid #ddd;background:#fff}.danger{border:1px solid #ffd0d0;background:#fff5f5;color:var(--danger)}
+.version{display:flex;justify-content:space-between;align-items:center;color:#777}.status-ok{color:#269146;font-size:13px}.status-error{color:#d33;font-size:13px}
+
+/* profile */
+#profilePage,#memoryPage,#apiPage,#patchPage{position:absolute;inset:0;background:#fff;z-index:15;overflow:auto}
+.profile-hero{position:relative;height:250px;background:linear-gradient(150deg,#e8edff,#f7f8ff);overflow:hidden}
+.profile-bg-img{width:100%;height:100%;object-fit:cover;filter:brightness(.9)}
+.profile-back,.page-back{position:absolute;left:12px;top:max(10px,env(safe-area-inset-top));z-index:2;width:42px;height:42px;border:0;border-radius:50%;background:#ffffffdd;font-size:28px}
+.profile-body{padding:0 20px 30px;text-align:center}.profile-avatar{width:106px;height:106px;margin:-53px auto 10px;position:relative;border-radius:50%;border:4px solid #fff;background:#e9edff;overflow:hidden;display:grid;place-items:center;font-size:30px;font-weight:800}
+.profile-avatar img{width:100%;height:100%;object-fit:cover}.profile-name{font-size:24px;font-weight:800}.profile-status{color:#777;margin-top:6px;min-height:22px}.profile-meta{color:#999;font-size:14px;margin-top:8px}
+.profile-actions{display:flex;justify-content:center;gap:10px;margin-top:22px}.profile-actions button{min-width:130px}
+.profile-detail{max-width:520px;margin:28px auto 0;padding:15px;background:#fafafa;border-radius:16px;text-align:left}.profile-detail p{color:#555;line-height:1.55;white-space:pre-wrap}
+.page-header{height:58px;display:grid;grid-template-columns:48px 1fr 48px;align-items:center;border-bottom:1px solid var(--line);padding:0 8px;position:sticky;top:0;background:#fff;z-index:2}
+.page-header h2{font-size:19px;text-align:center;margin:0}.page-content{padding:18px 16px 34px}.page-content textarea{min-height:320px}
+
+/* chat */
+#chatRoom{position:absolute;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column}
+.chat-header{height:58px;flex:none;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 8px;gap:8px}
+.chat-title{flex:1;min-width:0}.chat-title strong,.chat-title small{display:block}.chat-title small{color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#messageList{flex:1;overflow-y:auto;padding:12px 12px 18px;display:flex;flex-direction:column}
+.message-row{display:flex;align-items:flex-start;gap:7px;margin-top:3px}.message-row.mine{justify-content:flex-end}.message-row.ai{justify-content:flex-start}
+.chat-avatar-slot{width:34px;flex:0 0 34px}.chat-avatar{width:34px;height:34px;border-radius:50%;overflow:hidden;background:#e1e7f7;display:grid;place-items:center;font-size:11px;font-weight:800}
+.chat-avatar img{width:100%;height:100%;object-fit:cover}.bubble-wrap{max-width:76%;display:flex;align-items:flex-end;gap:5px}.message-row.mine .bubble-wrap{flex-direction:row-reverse}
+.message{width:fit-content;max-width:100%;padding:7px 10px;border-radius:15px;line-height:1.32;white-space:pre-wrap;word-break:break-word;box-shadow:0 1px 2px #00000008}
+.message.ai{background:var(--ai)}.message.mine{background:var(--mine)}.message img{display:block;max-width:100%;border-radius:11px}
+.time{font-size:10px;color:#9b9ea5;white-space:nowrap;padding-bottom:1px}.time.invisible{visibility:hidden}
+.message-row.group-middle,.message-row.group-last{margin-top:1px}.message-row.ai.group-middle .chat-avatar,.message-row.ai.group-last .chat-avatar{visibility:hidden}
+.composer{flex:none;min-height:58px;background:#fff;display:flex;align-items:flex-end;gap:7px;padding:7px 8px;border-top:1px solid var(--line)}
+.composer textarea{flex:1;resize:none;max-height:110px;border-radius:18px;margin:0;padding:8px 11px}.send{border:0;background:var(--accent);color:#fff;border-radius:13px;padding:9px 13px}
+.typing{margin-left:41px;width:fit-content;background:#fff;color:#888;padding:7px 10px;border-radius:15px;margin-top:4px;font-size:13px}
+
+/* drawer */
+.drawer-backdrop{position:absolute;inset:0;background:#0005;z-index:40;opacity:0;pointer-events:none;transition:.2s}
+.drawer-backdrop.open{opacity:1;pointer-events:auto}.drawer{position:absolute;right:0;top:0;bottom:0;width:min(330px,86%);background:#fff;z-index:41;transform:translateX(100%);transition:.25s;box-shadow:-8px 0 25px #0002;padding-top:env(safe-area-inset-top);overflow-y:auto}
+.drawer.open{transform:translateX(0)}.drawer-head{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--line)}
+.drawer-section{padding:16px;border-bottom:1px solid var(--line)}.drawer-section h4{margin:0 0 12px}.drawer-action{width:100%;text-align:left;padding:13px 10px;border:0;background:#fff;border-radius:10px}
+.drawer-dday{font-size:24px;font-weight:800;color:var(--accent);margin:8px 0}
+
+/* gallery */
+#roomGallery{position:absolute;inset:0;z-index:45;background:#fff;display:flex;flex-direction:column}.sub-header{height:58px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding:0 8px}.sub-header h2{font-size:19px;margin:0}
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:3px;overflow-y:auto}.gallery img{width:100%;aspect-ratio:1;object-fit:cover;background:#eee}
+
+/* modal */
+.modal{position:fixed;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;padding:14px;z-index:100}
+.modal-box{width:min(570px,100%);max-height:90dvh;overflow:auto;background:#fff;border-radius:20px;padding:19px}.modal-box h2{margin-top:0}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:9px}.image-input-row{display:grid;grid-template-columns:82px 1fr;gap:12px;align-items:center}
+.image-preview{width:82px;height:82px;border-radius:18px;background:#f0f1f4;overflow:hidden;display:grid;place-items:center;color:#aaa;font-size:12px}.image-preview.circle{border-radius:50%}.image-preview img{width:100%;height:100%;object-fit:cover}
+#viewer{position:fixed;inset:0;background:#000e;z-index:300;display:flex;align-items:center;justify-content:center}#viewer img{max-width:96%;max-height:92%;object-fit:contain}
+.viewer-close{position:absolute;right:16px;top:16px;width:42px;height:42px;border-radius:50%;border:0;background:#333;color:#fff;font-size:24px}
+.patch-item{padding:14px 0;border-bottom:1px solid var(--line)}.patch-item strong{display:block;margin-bottom:6px}.patch-item p{margin:0;color:#666;line-height:1.55}
+@media(max-width:500px){.two{grid-template-columns:1fr}.profile-hero{height:225px}.profile-actions button{min-width:118px}}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header class="main-header">
+    <div class="header-spacer"></div>
+    <h1 id="appTitle">나만의 AI 메신저</h1>
+    <button id="addFriendBtn" class="icon-btn">＋</button>
+  </header>
+
+  <section id="friendsView" class="view active"></section>
+  <section id="chatsView" class="view"></section>
+  <section id="settingsView" class="view"></section>
+
+  <nav class="nav">
+    <button class="active" data-tab="friends">👥<br>친구</button>
+    <button data-tab="chats">💬<br>대화</button>
+    <button data-tab="settings">⚙️<br>설정</button>
+  </nav>
+
+  <!-- profile -->
+  <section id="profilePage" class="hidden">
+    <div class="profile-hero">
+      <button class="profile-back" onclick="closeProfile()">‹</button>
+      <img id="profileBackground" class="profile-bg-img hidden" alt="">
+    </div>
+    <div class="profile-body">
+      <div id="profileAvatar" class="profile-avatar"></div>
+      <div id="profileName" class="profile-name"></div>
+      <div id="profileStatus" class="profile-status"></div>
+      <div id="profileMeta" class="profile-meta"></div>
+      <div class="profile-actions">
+        <button class="primary" onclick="chatFromProfile()">💬 채팅하기</button>
+        <button class="secondary" onclick="editProfileFriend()">⚙️ 친구 설정</button>
+      </div>
+      <div class="profile-detail"><strong>캐릭터 소개</strong><p id="profilePersona"></p></div>
+    </div>
+  </section>
+
+  <!-- memory page -->
+  <section id="memoryPage" class="hidden">
+    <div class="page-header">
+      <button class="icon-btn" onclick="closeMemoryPage()">‹</button>
+      <h2>장기 기억</h2>
+      <div></div>
+    </div>
+    <div class="page-content">
+      <p style="color:#777;line-height:1.55">AI가 앞으로의 대화에서 기억할 중요한 내용을 확인하고 직접 수정할 수 있습니다.</p>
+      <textarea id="memoryEditor" placeholder="아직 저장된 장기 기억이 없습니다."></textarea>
+      <button class="primary" style="width:100%;margin-top:12px" onclick="saveMemoryPage()">장기 기억 저장</button>
+    </div>
+  </section>
+
+  <!-- API page -->
+  <section id="apiPage" class="hidden">
+    <div class="page-header">
+      <button class="icon-btn" onclick="closeApiPage()">‹</button>
+      <h2>Gemini API 설정</h2>
+      <div></div>
+    </div>
+    <div class="page-content">
+      <div class="card">
+        <label>Gemini API Key
+          <input id="apiPageKey" type="password" placeholder="AIza...">
+        </label>
+        <button class="secondary" onclick="testApiKeyFromPage()">API 연결 테스트</button>
+        <div id="apiPageStatus" style="margin-top:10px"></div>
+      </div>
+      <button class="primary" style="width:100%" onclick="saveApiPage()">API Key 저장</button>
+    </div>
+  </section>
+
+  <!-- patch notes -->
+  <section id="patchPage" class="hidden">
+    <div class="page-header">
+      <button class="icon-btn" onclick="closePatchPage()">‹</button>
+      <h2>패치노트</h2>
+      <div></div>
+    </div>
+    <div class="page-content">
+      <div class="patch-item">
+        <strong>v1.0.1</strong>
+        <p>답장 오류 표시 개선, API 재시도 및 타임아웃 적용, 응답 속도 최적화, 여러 말풍선 시간차 출력, 프로필 사진 표시, 친구 프로필 화면, 채팅방 사이드 메뉴, 채팅방별 갤러리, 생일 기반 나이 계산, 외형 참고 이미지, 장기 기억 전용 페이지, API 잠금 페이지, 채팅방 삭제 기능을 추가했습니다.</p>
+      </div>
+      <div class="patch-item">
+        <strong>v1.0.0</strong>
+        <p>친구, 1:1 AI 채팅, 캐릭터 설정, 사진 전송, 기본 설정 기능을 제공한 최초 버전입니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- chat -->
+  <section id="chatRoom" class="hidden">
+    <div class="chat-header">
+      <button id="backBtn" class="icon-btn">‹</button>
+      <div class="chat-title"><strong id="chatName"></strong><small id="chatStatus"></small></div>
+      <button id="roomMenuBtn" class="icon-btn">☰</button>
+    </div>
+
+    <div id="messageList"></div>
+
+    <div class="composer">
+      <button id="plusBtn" class="icon-btn">＋</button>
+      <textarea id="messageInput" rows="1" placeholder="메시지를 입력하세요"></textarea>
+      <button id="sendBtn" class="send">전송</button>
+    </div>
+
+    <div id="drawerBackdrop" class="drawer-backdrop" onclick="closeDrawer()"></div>
+    <aside id="roomDrawer" class="drawer">
+      <div class="drawer-head">
+        <strong id="drawerFriendName">채팅방</strong>
+        <button class="icon-btn" onclick="closeDrawer()">×</button>
+      </div>
+
+      <div class="drawer-section">
+        <h4>채팅방</h4>
+        <button class="drawer-action" onclick="openRoomGallery()">🖼️ 사진 모아보기</button>
+        <button class="drawer-action" onclick="openFriendFromDrawer()">👤 친구 프로필</button>
+        <button class="drawer-action" onclick="editFriendFromDrawer()">⚙️ 친구 설정</button>
+      </div>
+
+      <div class="drawer-section">
+        <h4>대화 설정</h4>
+        <label class="check"><input id="actionDescriptions" type="checkbox"> 행동 괄호 묘사</label>
+        <label class="check"><input id="roomPaused" type="checkbox"> 톡 정지</label>
+        <label>시간 흐름
+          <select id="timeMode">
+            <option value="realtime">실시간</option>
+            <option value="accelerated">시간 가속</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="drawer-section">
+        <h4>기념일</h4>
+        <label>기념일 이름<input id="ddayLabel"></label>
+        <label>기념일 날짜<input id="ddayDate" type="date"></label>
+        <div id="drawerDday" class="drawer-dday"></div>
+        <button class="primary" style="width:100%" onclick="saveRoomSettings()">채팅방 설정 저장</button>
+      </div>
+
+      <div class="drawer-section">
+        <button class="danger" style="width:100%" onclick="deleteCurrentRoom()">채팅방 삭제</button>
+      </div>
+    </aside>
+
+    <section id="roomGallery" class="hidden">
+      <div class="sub-header">
+        <button class="icon-btn" onclick="closeRoomGallery()">‹</button>
+        <h2>사진 모아보기</h2>
+      </div>
+      <div id="roomGalleryGrid" class="gallery"></div>
+    </section>
+  </section>
+</div>
+
+<input id="photoInput" type="file" accept="image/*" class="hidden">
+<input id="friendAvatarInput" type="file" accept="image/*" class="hidden">
+<input id="friendReferenceInput" type="file" accept="image/*" class="hidden">
+<input id="friendBackgroundInput" type="file" accept="image/*" class="hidden">
+
+<!-- friend modal -->
+<div id="friendModal" class="modal hidden">
+  <div class="modal-box">
+    <h2>친구 설정</h2>
+    <input id="friendId" type="hidden">
+    <label>이름<input id="friendName"></label>
+    <label>상태 메시지<input id="friendStatus"></label>
+    <div class="two">
+      <label>생일<input id="friendBirthday" type="date"></label>
+      <label>성별<input id="friendGender" placeholder="예: 남성"></label>
+    </div>
+    <label>지역<input id="friendRegion"></label>
+
+    <label class="form-label">프로필 사진</label>
+    <div class="image-input-row">
+      <div id="friendAvatarPreview" class="image-preview circle">없음</div>
+      <div>
+        <button class="secondary" onclick="pickFriendAvatar()">프로필 사진 선택</button>
+        <button class="secondary" onclick="clearPendingImage('avatar')">지우기</button>
+      </div>
+    </div>
+
+    <label class="form-label">프로필 배경 사진</label>
+    <div class="image-input-row">
+      <div id="friendBackgroundPreview" class="image-preview">없음</div>
+      <div>
+        <button class="secondary" onclick="pickFriendBackground()">배경 사진 선택</button>
+        <button class="secondary" onclick="clearPendingImage('background')">지우기</button>
+      </div>
+    </div>
+
+    <label>외형 고정 사항<textarea id="friendAppearance" rows="4" placeholder="머리, 눈, 얼굴형, 체형 등"></textarea></label>
+
+    <label class="form-label">외형 참고 이미지</label>
+    <div class="image-input-row">
+      <div id="friendReferencePreview" class="image-preview">없음</div>
+      <div>
+        <button class="secondary" onclick="pickFriendReference()">참고 이미지 선택</button>
+        <button class="secondary" onclick="clearPendingImage('reference')">지우기</button>
+      </div>
+    </div>
+
+    <label>의상 취향<textarea id="friendOutfit" rows="3"></textarea></label>
+    <label>성격 / 말투 / 관계 설정<textarea id="friendPersona" rows="6"></textarea></label>
+
+    <label>대화 방식
+      <select id="friendBubble">
+        <option value="split">카톡처럼 여러 말풍선</option>
+        <option value="long">한 번에 길게</option>
+      </select>
+    </label>
+
+    <label class="check"><input id="friendAutoImage" type="checkbox"> 자연스러울 때 AI가 사진 보내기</label>
+
+    <button class="secondary" style="width:100%;margin-top:12px" onclick="openMemoryFromFriendModal()">🧠 장기 기억 확인 / 편집</button>
+
+    <div class="modal-actions">
+      <button class="secondary" onclick="closeModal('friendModal')">취소</button>
+      <button class="primary" onclick="saveFriend()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- media -->
+<div id="mediaModal" class="modal hidden">
+  <div class="modal-box">
+    <h2>보내기</h2>
+    <button class="secondary" style="width:100%" onclick="selectPhoto()">📷 사진 보내기</button>
+    <div class="modal-actions"><button class="secondary" onclick="closeModal('mediaModal')">닫기</button></div>
+  </div>
+</div>
+
+<!-- viewer -->
+<div id="viewer" class="hidden">
+  <button class="viewer-close" onclick="closeViewer()">×</button>
+  <img id="viewerImage" alt="">
+</div>
+
+<script>
+const APP_VERSION="1.0.1";
+const API_PAGE_PASSWORD="7882";
+const TEXT_MODEL="gemini-3.7-flash";
+const IMAGE_MODEL="gemini-3.1-flash-image";
+const REPLY_GAP_MS=420;
+
+const state={
+  currentTab:"friends",
+  currentFriendId:null,
+  profileFriendId:null,
+  memoryFriendId:null,
+  pendingImages:{avatar:undefined,reference:undefined,background:undefined},
+  friends:load("friends",[]),
+  rooms:load("rooms",{}),
+  settings:load("settings",{
+    appName:"나만의 AI 메신저",
+    apiKey:"",
+    user:{nickname:"나",birthday:"",region:"",gender:""},
+    globalPrompt:"캐릭터 설정과 관계의 흐름을 일관되게 유지하며 실제 메신저처럼 자연스럽게 대화한다."
+  }),
+  messages:load("messages",{})
+};
+
+function load(key,fallback){
+  try{
+    const value=localStorage.getItem("AI_MESSENGER_"+key);
+    const parsed=value?JSON.parse(value):fallback;
+    if(key==="settings"){
+      parsed.user=parsed.user||{};
+      if(!("birthday" in parsed.user))parsed.user.birthday="";
+      if(!("apiKey" in parsed))parsed.apiKey="";
+    }
+    return parsed;
+  }catch{return fallback}
+}
+function save(key,value){localStorage.setItem("AI_MESSENGER_"+key,JSON.stringify(value))}
+function saveAll(){
+  save("friends",state.friends);save("rooms",state.rooms);save("settings",state.settings);save("messages",state.messages);
+}
+function uuid(){return crypto.randomUUID()}
+function escapeHtml(text=""){const d=document.createElement("div");d.textContent=String(text??"");return d.innerHTML}
+function delay(ms){return new Promise(r=>setTimeout(r,ms))}
+function closeModal(id){document.getElementById(id).classList.add("hidden")}
+function currentFriend(){return state.friends.find(f=>f.id===state.currentFriendId)}
+function friendById(id){return state.friends.find(f=>f.id===id)}
+function getMessages(id){if(!state.messages[id])state.messages[id]=[];return state.messages[id]}
+function getRoom(id){
+  if(!state.rooms[id])state.rooms[id]={actionDescriptions:true,paused:false,timeMode:"realtime",ddayLabel:"",ddayDate:""};
+  return state.rooms[id];
+}
+function initials(name){return(name||"?").trim().slice(0,2)}
+function formatTime(date){return new Date(date).toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"})}
+function ageFromBirthday(birthday){
+  if(!birthday)return"";
+  const b=new Date(birthday+"T00:00:00"),n=new Date();
+  let age=n.getFullYear()-b.getFullYear();
+  if(n.getMonth()<b.getMonth()||(n.getMonth()===b.getMonth()&&n.getDate()<b.getDate()))age--;
+  return age>=0?age:"";
+}
+function fileToDataURL(file){
+  return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)});
+}
+async function resizeImageFile(file,maxSize=900,quality=.84){
+  const src=await fileToDataURL(file);
+  const image=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=reject;i.src=src});
+  let w=image.width,h=image.height;
+  if(Math.max(w,h)>maxSize){const ratio=maxSize/Math.max(w,h);w=Math.round(w*ratio);h=Math.round(h*ratio)}
+  const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(image,0,0,w,h);
+  return c.toDataURL("image/jpeg",quality);
+}
+
+/* reliable fetch: timeout + one retry for temporary failures */
+async function fetchWithRetry(url,options={},attempts=2,timeoutMs=18000){
+  let lastError;
+  for(let i=0;i<attempts;i++){
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),timeoutMs);
+    try{
+      const res=await fetch(url,{...options,signal:controller.signal});
+      clearTimeout(timer);
+      if(res.ok)return res;
+      const body=await res.text();
+      const retryable=res.status===429||res.status===500||res.status===502||res.status===503||res.status===504;
+      if(!retryable||i===attempts-1)throw new Error(`HTTP ${res.status}: ${body}`);
+      lastError=new Error(`HTTP ${res.status}: ${body}`);
+    }catch(err){
+      clearTimeout(timer);
+      lastError=err;
+      const retryable=err?.name==="AbortError"||/HTTP (429|500|502|503|504)/.test(err?.message||"");
+      if(!retryable||i===attempts-1)throw err;
+    }
+    await delay(500+300*i);
+  }
+  throw lastError||new Error("요청 실패");
+}
+
+/* tabs */
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+function setTab(tab){
+  state.currentTab=tab;
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  document.getElementById(tab+"View").classList.add("active");
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+  document.getElementById("addFriendBtn").style.visibility=tab==="friends"?"visible":"hidden";
+  renderAll();
+}
+document.getElementById("addFriendBtn").onclick=()=>openFriendModal();
+
+/* friends */
+function renderFriends(){
+  const view=document.getElementById("friendsView");
+  if(!state.friends.length){view.innerHTML='<div class="empty">오른쪽 위 + 버튼으로<br>첫 AI 친구를 만들어보세요.</div>';return}
+  view.innerHTML=state.friends.map(f=>`
+  <div class="friend-row" onclick="openProfile('${f.id}')">
+    <div class="avatar">${f.avatar?`<img src="${f.avatar}">`:escapeHtml(initials(f.name))}</div>
+    <div class="row-info"><strong>${escapeHtml(f.name)}</strong><small>${escapeHtml(f.status||"")}</small></div>
+  </div>`).join("");
+}
+function openProfile(id){
+  const f=friendById(id);if(!f)return;
+  state.profileFriendId=id;
+  document.getElementById("profileName").textContent=f.name;
+  document.getElementById("profileStatus").textContent=f.status||"";
+  const age=ageFromBirthday(f.birthday);
+  document.getElementById("profileMeta").textContent=[
+    age!==""?`${age}세`:"",f.birthday?`생일 ${f.birthday}`:"",f.region||"",f.gender||""
+  ].filter(Boolean).join(" · ");
+  document.getElementById("profilePersona").textContent=f.persona||"아직 입력된 캐릭터 소개가 없습니다.";
+  document.getElementById("profileAvatar").innerHTML=f.avatar?`<img src="${f.avatar}">`:escapeHtml(initials(f.name));
+  const bg=document.getElementById("profileBackground");
+  if(f.background){bg.src=f.background;bg.classList.remove("hidden")}else{bg.src="";bg.classList.add("hidden")}
+  document.getElementById("profilePage").classList.remove("hidden");
+}
+function closeProfile(){document.getElementById("profilePage").classList.add("hidden");state.profileFriendId=null}
+function chatFromProfile(){const id=state.profileFriendId;closeProfile();openChat(id)}
+function editProfileFriend(){const id=state.profileFriendId||state.currentFriendId;if(id)openFriendModal(id)}
+function openFriendFromDrawer(){
+  const id=state.currentFriendId;closeDrawer();document.getElementById("chatRoom").classList.add("hidden");state.currentFriendId=null;openProfile(id);
+}
+function editFriendFromDrawer(){const id=state.currentFriendId;closeDrawer();openFriendModal(id)}
+
+function renderImagePreview(id,data){document.getElementById(id).innerHTML=data?`<img src="${data}">`:"없음"}
+function openFriendModal(id=null){
+  const f=id?friendById(id):null;
+  document.getElementById("friendId").value=f?.id||"";
+  document.getElementById("friendName").value=f?.name||"";
+  document.getElementById("friendStatus").value=f?.status||"";
+  document.getElementById("friendBirthday").value=f?.birthday||"";
+  document.getElementById("friendGender").value=f?.gender||"";
+  document.getElementById("friendRegion").value=f?.region||"";
+  document.getElementById("friendAppearance").value=f?.appearance||"";
+  document.getElementById("friendOutfit").value=f?.outfit||"";
+  document.getElementById("friendPersona").value=f?.persona||"";
+  document.getElementById("friendBubble").value=f?.bubbleStyle||"split";
+  document.getElementById("friendAutoImage").checked=!!f?.autoImage;
+  state.pendingImages={avatar:f?.avatar||null,reference:f?.referenceImage||null,background:f?.background||null};
+  renderImagePreview("friendAvatarPreview",state.pendingImages.avatar);
+  renderImagePreview("friendReferencePreview",state.pendingImages.reference);
+  renderImagePreview("friendBackgroundPreview",state.pendingImages.background);
+  document.getElementById("friendModal").classList.remove("hidden");
+}
+function pickFriendAvatar(){document.getElementById("friendAvatarInput").click()}
+function pickFriendReference(){document.getElementById("friendReferenceInput").click()}
+function pickFriendBackground(){document.getElementById("friendBackgroundInput").click()}
+document.getElementById("friendAvatarInput").onchange=async e=>{
+  const f=e.target.files?.[0];if(!f)return;state.pendingImages.avatar=await resizeImageFile(f,700,.86);renderImagePreview("friendAvatarPreview",state.pendingImages.avatar);e.target.value="";
+};
+document.getElementById("friendReferenceInput").onchange=async e=>{
+  const f=e.target.files?.[0];if(!f)return;state.pendingImages.reference=await resizeImageFile(f,1000,.84);renderImagePreview("friendReferencePreview",state.pendingImages.reference);e.target.value="";
+};
+document.getElementById("friendBackgroundInput").onchange=async e=>{
+  const f=e.target.files?.[0];if(!f)return;state.pendingImages.background=await resizeImageFile(f,1200,.82);renderImagePreview("friendBackgroundPreview",state.pendingImages.background);e.target.value="";
+};
+function clearPendingImage(type){
+  state.pendingImages[type]=null;
+  const map={avatar:"friendAvatarPreview",reference:"friendReferencePreview",background:"friendBackgroundPreview"};
+  renderImagePreview(map[type],null);
+}
+function saveFriend(){
+  const name=document.getElementById("friendName").value.trim();
+  if(!name){alert("친구 이름을 입력해주세요.");return}
+  const id=document.getElementById("friendId").value||uuid(),old=friendById(id)||{};
+  const friend={
+    ...old,id,name,
+    status:document.getElementById("friendStatus").value.trim(),
+    birthday:document.getElementById("friendBirthday").value,
+    gender:document.getElementById("friendGender").value.trim(),
+    region:document.getElementById("friendRegion").value.trim(),
+    avatar:state.pendingImages.avatar||"",
+    background:state.pendingImages.background||"",
+    appearance:document.getElementById("friendAppearance").value.trim(),
+    referenceImage:state.pendingImages.reference||"",
+    outfit:document.getElementById("friendOutfit").value.trim(),
+    persona:document.getElementById("friendPersona").value.trim(),
+    bubbleStyle:document.getElementById("friendBubble").value,
+    autoImage:document.getElementById("friendAutoImage").checked,
+    memory:old.memory||""
+  };
+  const i=state.friends.findIndex(x=>x.id===id);if(i>=0)state.friends[i]=friend;else state.friends.push(friend);
+  saveAll();closeModal("friendModal");renderAll();
+  if(state.profileFriendId===id)openProfile(id);if(state.currentFriendId===id)setupChatHeader();
+}
+
+/* memory */
+function openMemoryFromFriendModal(){
+  const id=document.getElementById("friendId").value;
+  if(!id){alert("먼저 친구를 저장한 뒤 장기 기억을 편집해주세요.");return}
+  const f=friendById(id);if(!f)return;
+  state.memoryFriendId=id;
+  document.getElementById("memoryEditor").value=f.memory||"";
+  closeModal("friendModal");
+  document.getElementById("memoryPage").classList.remove("hidden");
+}
+function closeMemoryPage(){document.getElementById("memoryPage").classList.add("hidden");state.memoryFriendId=null}
+function saveMemoryPage(){
+  const f=friendById(state.memoryFriendId);if(!f)return;
+  f.memory=document.getElementById("memoryEditor").value.trim();saveAll();alert("장기 기억을 저장했습니다.");closeMemoryPage();openFriendModal(f.id);
+}
+
+/* chat list */
+function renderChats(){
+  const view=document.getElementById("chatsView");
+  const friends=state.friends.filter(f=>getMessages(f.id).length);
+  if(!friends.length){view.innerHTML='<div class="empty">아직 대화가 없습니다.</div>';return}
+  view.innerHTML=friends.map(f=>{
+    const last=getMessages(f.id).at(-1);
+    return `<div class="chat-row" onclick="openChat('${f.id}')">
+      <div class="avatar">${f.avatar?`<img src="${f.avatar}">`:escapeHtml(initials(f.name))}</div>
+      <div class="row-info"><strong>${escapeHtml(f.name)}</strong><small>${last?.type==="image"?"[사진]":escapeHtml(last?.text||"")}</small></div>
+    </div>`;
+  }).join("");
+}
+function setupChatHeader(){
+  const f=currentFriend();if(!f)return;
+  document.getElementById("chatName").textContent=f.name;
+  document.getElementById("chatStatus").textContent=f.status||"";
+  document.getElementById("drawerFriendName").textContent=f.name;
+}
+function openChat(id){state.currentFriendId=id;setupChatHeader();document.getElementById("chatRoom").classList.remove("hidden");renderMessages()}
+document.getElementById("backBtn").onclick=()=>{closeDrawer();document.getElementById("chatRoom").classList.add("hidden");state.currentFriendId=null;renderChats()};
+
+/* grouping */
+function messageGroupPosition(messages,index){
+  const m=messages[index],p=messages[index-1],n=messages[index+1];
+  const sameP=p&&p.role===m.role&&p.groupId&&m.groupId&&p.groupId===m.groupId;
+  const sameN=n&&n.role===m.role&&n.groupId&&m.groupId&&n.groupId===m.groupId;
+  if(!sameP&&sameN)return"first";if(sameP&&sameN)return"middle";if(sameP&&!sameN)return"last";return"single";
+}
+function avatarHtml(f){return f.avatar?`<img src="${f.avatar}">`:escapeHtml(initials(f.name))}
+function renderMessages(){
+  const f=currentFriend();if(!f)return;
+  const messages=getMessages(f.id),list=document.getElementById("messageList");
+  list.innerHTML=messages.map((m,i)=>{
+    const pos=messageGroupPosition(messages,i),isUser=m.role==="user",showAvatar=!isUser&&(pos==="single"||pos==="first"),showTime=pos==="single"||pos==="last";
+    const body=m.type==="image"?`<img src="${m.data}" onclick="openViewerMessage('${m.id}')">`:escapeHtml(m.text);
+    return `<div class="message-row ${isUser?"mine":"ai"} group-${pos}">
+      ${!isUser?`<div class="chat-avatar-slot"><div class="chat-avatar">${showAvatar?avatarHtml(f):""}</div></div>`:""}
+      <div class="bubble-wrap">
+        <div class="message ${isUser?"mine":"ai"}">${body}</div>
+        <div class="time ${showTime?"":"invisible"}">${showTime?formatTime(m.time):"00:00"}</div>
+      </div>
+    </div>`;
+  }).join("");
+  list.scrollTop=list.scrollHeight;
+}
+function showTyping(){
+  const list=document.getElementById("messageList"),d=document.createElement("div");d.id="typing";d.className="typing";d.textContent="답장 중…";list.appendChild(d);list.scrollTop=list.scrollHeight;
+}
+function removeTyping(){document.getElementById("typing")?.remove()}
+
+/* send */
+document.getElementById("sendBtn").onclick=sendMessage;
+document.getElementById("messageInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage()}});
+async function sendMessage(){
+  const input=document.getElementById("messageInput"),text=input.value.trim();if(!text)return;
+  const f=currentFriend(),room=getRoom(f.id);
+  if(room.paused){alert("현재 이 채팅방은 톡 정지 상태입니다.");return}
+  if(!state.settings.apiKey){alert("설정 → API 설정에서 Gemini API Key를 먼저 저장해주세요.");return}
+  const userGroup=uuid();
+  getMessages(f.id).push({id:uuid(),groupId:userGroup,role:"user",type:"text",text,time:new Date().toISOString()});
+  input.value="";saveAll();renderMessages();showTyping();document.getElementById("sendBtn").disabled=true;
+
+  try{
+    const response=await callGemini(f);
+    removeTyping();
+    const aiGroup=uuid();
+
+    for(let i=0;i<response.messages.length;i++){
+      if(i>0)await delay(REPLY_GAP_MS+Math.floor(Math.random()*220));
+      getMessages(f.id).push({
+        id:uuid(),groupId:aiGroup,role:"assistant",type:"text",text:String(response.messages[i]),time:new Date().toISOString()
+      });
+      saveAll();renderMessages();
+    }
+
+    if(f.autoImage&&response.imagePrompt){
+      try{await generateAIImage(response.imagePrompt,f,uuid())}catch(err){console.warn("이미지 생성 실패",err)}
+    }
+    autoMemoryUpdate(f);
+  }catch(error){
+    removeTyping();console.error(error);
+    getMessages(f.id).push({
+      id:uuid(),groupId:uuid(),role:"assistant",type:"text",
+      text:"Gemini 오류:\n"+friendlyError(error),time:new Date().toISOString()
+    });
+    saveAll();renderMessages();
+  }finally{
+    document.getElementById("sendBtn").disabled=false;
+  }
+}
+function friendlyError(error){
+  const msg=error?.message||String(error);
+  if(error?.name==="AbortError")return"응답 시간이 너무 길어 요청이 중단됐어요. 다시 한 번 보내주세요.";
+  if(/429/.test(msg))return"요청이 잠시 몰렸어요. 잠깐 뒤 다시 보내주세요.\n"+msg;
+  if(/401|403|API_KEY_INVALID|API key not valid/i.test(msg))return"API Key 또는 API 권한을 확인해주세요.\n"+msg;
+  return msg;
+}
+
+/* gemini text */
+async function callGemini(friend){
+  const room=getRoom(friend.id);
+  const history=getMessages(friend.id).filter(m=>m.type==="text").slice(-24);
+  const contents=history.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.text}]}));
+  const friendAge=ageFromBirthday(friend.birthday),userAge=ageFromBirthday(state.settings.user.birthday);
+
+  const systemPrompt=`
+당신은 1:1 메신저 안에서 사용자와 대화하는 가상의 AI 캐릭터다. 실제 메신저처럼 자연스럽고 빠르게 핵심을 답한다.
+
+[캐릭터]
+이름: ${friend.name}
+생일: ${friend.birthday||"미설정"}
+나이: ${friendAge!==""?friendAge+"세":"미설정"}
+성별: ${friend.gender||"미설정"}
+지역: ${friend.region||"미설정"}
+상태 메시지: ${friend.status||""}
+외형 고정 사항: ${friend.appearance||""}
+의상 취향: ${friend.outfit||""}
+성격/말투/관계: ${friend.persona||""}
+
+[사용자]
+닉네임: ${state.settings.user.nickname||"사용자"}
+생일: ${state.settings.user.birthday||"미설정"}
+나이: ${userAge!==""?userAge+"세":"미설정"}
+성별: ${state.settings.user.gender||"미설정"}
+지역: ${state.settings.user.region||"미설정"}
+
+[장기 기억]
+${friend.memory||"아직 저장된 장기 기억 없음"}
+
+[전역 규칙]
+${state.settings.globalPrompt||""}
+
+[채팅방]
+행동 괄호 묘사: ${room.actionDescriptions?"허용":"사용하지 않음"}
+시간 흐름: ${room.timeMode}
+기념일: ${room.ddayLabel||""} ${room.ddayDate||""}
+대화 방식: ${friend.bubbleStyle}
+자율 이미지: ${friend.autoImage?"허용":"사용하지 않음"}
+
+반드시 JSON 하나만 반환:
+{"messages":["말풍선1","말풍선2"],"imagePrompt":null}
+
+규칙:
+- messages는 1~4개.
+- split이면 실제 메신저처럼 필요한 만큼만 2~4개로 분할한다.
+- long이면 가능하면 1개.
+- 매번 장문으로 늘이지 않는다.
+- 지나치게 무성의한 단답만 반복하지 않는다.
+- 행동 묘사가 꺼져 있으면 괄호 행동 묘사를 쓰지 않는다.
+- 이미지가 정말 자연스러운 상황일 때만 imagePrompt를 영어로 작성하며 아니면 null.
+- JSON 이외의 텍스트를 출력하지 않는다.
+`.trim();
+
+  const response=await fetchWithRetry(
+    `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent`,
+    {
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-goog-api-key":state.settings.apiKey},
+      body:JSON.stringify({
+        systemInstruction:{parts:[{text:systemPrompt}]},
+        contents,
+        generationConfig:{
+          temperature:.85,
+          responseMimeType:"application/json",
+          maxOutputTokens:950
+        }
+      })
+    },
+    2,
+    18000
+  );
+
+  const data=await response.json();
+  let text=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("").trim();
+  if(!text)throw new Error("Gemini에서 텍스트 응답이 오지 않았습니다.");
+  text=text.replace(/^```json/i,"").replace(/```$/i,"").trim();
+  let parsed;
+  try{parsed=JSON.parse(text)}catch{parsed={messages:[text],imagePrompt:null}}
+  if(!Array.isArray(parsed.messages)||!parsed.messages.length)parsed.messages=["답장을 생성하지 못했어요."];
+  parsed.messages=parsed.messages.slice(0,4).map(String);
+  return parsed;
+}
+
+/* image */
+async function generateAIImage(imagePrompt,friend,groupId=uuid()){
+  const prompt=`Create a natural fictional messenger photo of the same character.
+Appearance: ${friend.appearance||""}
+Clothing preference: ${friend.outfit||""}
+Current scene: ${imagePrompt}
+Keep the same fictional character identity. No text, no watermark, no messaging UI.`;
+  const parts=[{text:prompt}];
+  if(friend.referenceImage){
+    const match=friend.referenceImage.match(/^data:(.*?);base64,(.*)$/);
+    if(match)parts.push({inlineData:{mimeType:match[1],data:match[2]}});
+  }
+  const response=await fetchWithRetry(
+    `https://generativelanguage.googleapis.com/v1beta/models/${IMAGE_MODEL}:generateContent`,
+    {
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-goog-api-key":state.settings.apiKey},
+      body:JSON.stringify({
+        contents:[{role:"user",parts}],
+        generationConfig:{responseModalities:["TEXT","IMAGE"]}
+      })
+    },
+    2,
+    30000
+  );
+  const data=await response.json(),partsOut=data?.candidates?.[0]?.content?.parts||[],imagePart=partsOut.find(p=>p.inlineData?.data);
+  if(!imagePart)throw new Error("이미지가 반환되지 않았습니다.");
+  const mime=imagePart.inlineData.mimeType||"image/png",image=`data:${mime};base64,${imagePart.inlineData.data}`;
+  getMessages(friend.id).push({id:uuid(),groupId,role:"assistant",type:"image",data:image,time:new Date().toISOString()});
+  saveAll();renderMessages();
+}
+
+/* auto memory */
+async function autoMemoryUpdate(friend){
+  const messages=getMessages(friend.id).filter(m=>m.type==="text");
+  if(!messages.length||messages.length%24!==0)return;
+  try{
+    const recent=messages.slice(-36).map(m=>`${m.role==="assistant"?friend.name:state.settings.user.nickname}: ${m.text}`).join("\n");
+    const prompt=`기존 기억과 최근 대화를 합쳐 앞으로 기억할 관계 변화, 약속, 취향, 중요한 사건만 한국어 1000자 이내로 요약하라. 일회성 잡담은 제외한다.\n\n기존 기억:\n${friend.memory||"없음"}\n\n최근 대화:\n${recent}`;
+    const response=await fetchWithRetry(
+      `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent`,
+      {
+        method:"POST",
+        headers:{"Content-Type":"application/json","x-goog-api-key":state.settings.apiKey},
+        body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{temperature:.2,maxOutputTokens:700}})
+      },
+      2,
+      15000
+    );
+    const data=await response.json(),summary=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("").trim();
+    if(summary){friend.memory=summary;saveAll()}
+  }catch(e){console.warn("기억 요약 실패",e)}
+}
+
+/* drawer */
+document.getElementById("roomMenuBtn").onclick=openDrawer;
+function openDrawer(){
+  const r=getRoom(state.currentFriendId);
+  document.getElementById("actionDescriptions").checked=r.actionDescriptions;
+  document.getElementById("roomPaused").checked=r.paused;
+  document.getElementById("timeMode").value=r.timeMode;
+  document.getElementById("ddayLabel").value=r.ddayLabel;
+  document.getElementById("ddayDate").value=r.ddayDate;
+  updateDday();
+  document.getElementById("drawerBackdrop").classList.add("open");
+  document.getElementById("roomDrawer").classList.add("open");
+}
+function closeDrawer(){
+  document.getElementById("drawerBackdrop").classList.remove("open");
+  document.getElementById("roomDrawer").classList.remove("open");
+}
+document.getElementById("ddayDate").onchange=updateDday;
+function updateDday(){
+  const date=document.getElementById("ddayDate").value,target=document.getElementById("drawerDday");
+  if(!date){target.textContent="";return}
+  const today=new Date();today.setHours(0,0,0,0);
+  const eventDate=new Date(date+"T00:00:00"),days=Math.round((eventDate-today)/86400000);
+  target.textContent=days===0?"D-DAY":days>0?"D-"+days:"D+"+Math.abs(days);
+}
+function saveRoomSettings(){
+  const r=getRoom(state.currentFriendId);
+  r.actionDescriptions=document.getElementById("actionDescriptions").checked;
+  r.paused=document.getElementById("roomPaused").checked;
+  r.timeMode=document.getElementById("timeMode").value;
+  r.ddayLabel=document.getElementById("ddayLabel").value.trim();
+  r.ddayDate=document.getElementById("ddayDate").value;
+  saveAll();updateDday();alert("채팅방 설정을 저장했습니다.");
+}
+function deleteCurrentRoom(){
+  const f=currentFriend();if(!f)return;
+  if(!confirm(`${f.name}와의 채팅 내용만 삭제할까요?\n친구와 프로필 설정은 그대로 남습니다.`))return;
+  state.messages[f.id]=[];
+  delete state.rooms[f.id];
+  saveAll();closeDrawer();document.getElementById("chatRoom").classList.add("hidden");state.currentFriendId=null;renderAll();
+}
+
+/* room gallery */
+function openRoomGallery(){closeDrawer();renderRoomGallery();document.getElementById("roomGallery").classList.remove("hidden")}
+function closeRoomGallery(){document.getElementById("roomGallery").classList.add("hidden")}
+function renderRoomGallery(){
+  const imgs=getMessages(state.currentFriendId).filter(m=>m.type==="image").slice().reverse(),grid=document.getElementById("roomGalleryGrid");
+  grid.innerHTML=imgs.length?imgs.map(m=>`<img src="${m.data}" onclick="openViewerMessage('${m.id}')">`).join(""):'<div class="empty" style="grid-column:1/-1">이 채팅방에서 주고받은 사진이 없습니다.</div>';
+}
+
+/* user photo */
+document.getElementById("plusBtn").onclick=()=>document.getElementById("mediaModal").classList.remove("hidden");
+function selectPhoto(){document.getElementById("photoInput").click()}
+document.getElementById("photoInput").onchange=async e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  const data=await resizeImageFile(file,1400,.86),f=currentFriend();
+  getMessages(f.id).push({id:uuid(),groupId:uuid(),role:"user",type:"image",data,time:new Date().toISOString()});
+  saveAll();closeModal("mediaModal");renderMessages();e.target.value="";
+};
+
+/* viewer */
+function openViewerMessage(id){
+  const m=getMessages(state.currentFriendId).find(x=>x.id===id);if(!m)return;
+  document.getElementById("viewerImage").src=m.data;document.getElementById("viewer").classList.remove("hidden");
+}
+function closeViewer(){document.getElementById("viewer").classList.add("hidden")}
+
+/* settings */
+function renderSettings(){
+  const s=state.settings,age=ageFromBirthday(s.user.birthday);
+  document.getElementById("settingsView").innerHTML=`
+    <div class="card">
+      <h3>📱 앱</h3>
+      <label>앱 이름<input id="settingAppName" value="${escapeHtml(s.appName)}"></label>
+      <div class="version"><span>현재 버전</span><strong>v${APP_VERSION}</strong></div>
+      <button class="secondary" style="width:100%;margin-top:12px" onclick="openPatchPage()">📋 패치노트</button>
+    </div>
+
+    <div class="card">
+      <h3>🔐 API</h3>
+      <p style="color:#777;font-size:14px;line-height:1.5">API Key는 잠금된 별도 페이지에서 관리합니다.</p>
+      <button class="secondary" style="width:100%" onclick="unlockApiPage()">API 설정 열기</button>
+    </div>
+
+    <div class="card">
+      <h3>🙋 내 정보</h3>
+      <label>닉네임<input id="settingNickname" value="${escapeHtml(s.user.nickname||"")}"></label>
+      <label>생일<input id="settingBirthday" type="date" value="${escapeHtml(s.user.birthday||"")}"></label>
+      <div style="color:#888;font-size:13px">${age!==""?`현재 만 ${age}세`:"생일을 선택하면 나이가 자동 계산됩니다."}</div>
+      <label>지역<input id="settingRegion" value="${escapeHtml(s.user.region||"")}"></label>
+      <label>성별<input id="settingGender" value="${escapeHtml(s.user.gender||"")}"></label>
+    </div>
+
+    <div class="card">
+      <h3>🤖 AI 공통 규칙</h3>
+      <textarea id="settingGlobalPrompt" rows="8">${escapeHtml(s.globalPrompt||"")}</textarea>
+    </div>
+
+    <button class="primary" style="width:100%" onclick="saveSettings()">설정 저장</button>
+  `;
+}
+function saveSettings(){
+  state.settings.appName=document.getElementById("settingAppName").value.trim()||"나만의 AI 메신저";
+  state.settings.user={
+    nickname:document.getElementById("settingNickname").value.trim(),
+    birthday:document.getElementById("settingBirthday").value,
+    region:document.getElementById("settingRegion").value.trim(),
+    gender:document.getElementById("settingGender").value.trim()
+  };
+  state.settings.globalPrompt=document.getElementById("settingGlobalPrompt").value;
+  saveAll();renderAll();alert("설정을 저장했습니다.");
+}
+
+/* API password page */
+function unlockApiPage(){
+  const entered=prompt("API 설정 비밀번호를 입력하세요.");
+  if(entered===null)return;
+  if(entered!==API_PAGE_PASSWORD){alert("비밀번호가 올바르지 않습니다.");return}
+  document.getElementById("apiPageKey").value=state.settings.apiKey||"";
+  document.getElementById("apiPageStatus").textContent="";
+  document.getElementById("apiPageStatus").className="";
+  document.getElementById("apiPage").classList.remove("hidden");
+}
+function closeApiPage(){document.getElementById("apiPage").classList.add("hidden")}
+function saveApiPage(){
+  state.settings.apiKey=document.getElementById("apiPageKey").value.trim();
+  saveAll();alert("API Key를 저장했습니다.");
+}
+async function testApiKeyFromPage(){
+  const key=document.getElementById("apiPageKey").value.trim(),status=document.getElementById("apiPageStatus");
+  status.className="";status.textContent="연결 확인 중…";
+  if(!key){status.className="status-error";status.textContent="API Key를 입력해주세요.";return}
+  try{
+    const response=await fetchWithRetry(
+      `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent`,
+      {
+        method:"POST",
+        headers:{"Content-Type":"application/json","x-goog-api-key":key},
+        body:JSON.stringify({contents:[{role:"user",parts:[{text:"OK라고만 답해."}]}],generationConfig:{maxOutputTokens:20}})
+      },
+      2,
+      12000
+    );
+    await response.json();
+    status.className="status-ok";status.textContent="✓ Gemini 연결 성공";
+  }catch(error){
+    status.className="status-error";status.textContent="연결 실패: "+friendlyError(error);
+  }
+}
+
+/* patch page */
+function openPatchPage(){document.getElementById("patchPage").classList.remove("hidden")}
+function closePatchPage(){document.getElementById("patchPage").classList.add("hidden")}
+
+/* render */
+function renderAll(){
+  document.title=state.settings.appName;
+  document.getElementById("appTitle").textContent=state.settings.appName;
+  renderFriends();renderChats();renderSettings();
+}
+renderAll();
+</script>
+</body>
+</html>
