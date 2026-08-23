@@ -1,0 +1,3190 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>나만의 AI 메신저</title>
+
+<style>
+:root{
+  --bg:#f4f5f7;
+  --card:#ffffff;
+  --text:#191919;
+  --sub:#888;
+  --line:#e8e8e8;
+  --accent:#5b7cfa;
+  --mine:#dbeafe;
+  --ai:#ffffff;
+  --danger:#e34848;
+}
+
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",
+  "Noto Sans KR",sans-serif;
+  background:#e9eaed;
+  color:var(--text);
+}
+
+button,input,textarea,select{
+  font:inherit;
+}
+
+button{cursor:pointer;}
+
+.hidden{display:none!important;}
+
+#app{
+  max-width:680px;
+  margin:auto;
+  height:100dvh;
+  background:#fff;
+  position:relative;
+  overflow:hidden;
+}
+
+/* 상단 */
+
+header.main-header{
+  height:58px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 17px;
+  border-bottom:1px solid var(--line);
+  background:#fff;
+}
+
+header.main-header h1{
+  font-size:20px;
+  margin:0;
+}
+
+.icon-btn{
+  border:0;
+  background:none;
+  font-size:25px;
+  padding:8px;
+}
+
+/* 뷰 */
+
+.view{
+  display:none;
+  height:calc(100dvh - 118px);
+  overflow-y:auto;
+  padding:14px;
+}
+
+.view.active{
+  display:block;
+}
+
+/* 하단 메뉴 */
+
+.nav{
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  height:60px;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  border-top:1px solid var(--line);
+  background:#fff;
+}
+
+.nav button{
+  border:0;
+  background:white;
+  color:#888;
+  font-size:13px;
+}
+
+.nav button.active{
+  color:var(--accent);
+  font-weight:700;
+}
+
+/* 친구 */
+
+.friend-row,
+.chat-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:13px 5px;
+  border-bottom:1px solid #f3f3f3;
+}
+
+.avatar{
+  width:51px;
+  height:51px;
+  border-radius:19px;
+  background:#e9edff;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-weight:800;
+  overflow:hidden;
+  flex:none;
+}
+
+.avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.row-info{
+  flex:1;
+  min-width:0;
+}
+
+.row-info strong,
+.row-info small{
+  display:block;
+}
+
+.row-info small{
+  margin-top:4px;
+  color:var(--sub);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.empty{
+  text-align:center;
+  color:#999;
+  padding:70px 20px;
+}
+
+/* 채팅방 */
+
+#chatRoom{
+  position:absolute;
+  z-index:20;
+  inset:0;
+  background:#eef2f5;
+  display:flex;
+  flex-direction:column;
+}
+
+.chat-header{
+  height:58px;
+  flex:none;
+  background:#fff;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  padding:0 8px;
+  gap:8px;
+}
+
+.chat-title{
+  flex:1;
+  min-width:0;
+}
+
+.chat-title strong,
+.chat-title small{
+  display:block;
+}
+
+.chat-title small{
+  color:#999;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+#messageList{
+  flex:1;
+  overflow-y:auto;
+  padding:18px 15px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.message{
+  max-width:80%;
+  padding:10px 13px;
+  border-radius:16px;
+  line-height:1.45;
+  white-space:pre-wrap;
+  word-break:break-word;
+  box-shadow:0 1px 2px rgba(0,0,0,.03);
+}
+
+.message.mine{
+  align-self:flex-end;
+  background:var(--mine);
+}
+
+.message.ai{
+  align-self:flex-start;
+  background:var(--ai);
+}
+
+.message img{
+  display:block;
+  max-width:100%;
+  border-radius:12px;
+}
+
+.time{
+  font-size:10px;
+  color:#999;
+  margin-top:4px;
+}
+
+.composer{
+  flex:none;
+  min-height:64px;
+  display:flex;
+  align-items:flex-end;
+  background:#fff;
+  padding:8px;
+  gap:7px;
+}
+
+.composer textarea{
+  flex:1;
+  resize:none;
+  border:1px solid #ddd;
+  border-radius:19px;
+  padding:10px 13px;
+  max-height:120px;
+  outline:none;
+}
+
+.send{
+  background:var(--accent);
+  color:#fff;
+  border:0;
+  padding:10px 13px;
+  border-radius:13px;
+}
+
+/* 설정 카드 */
+
+.card{
+  background:#fafafa;
+  padding:15px;
+  border-radius:16px;
+  margin-bottom:13px;
+}
+
+.card h3{
+  margin:0 0 13px;
+}
+
+.card label{
+  display:block;
+  margin:11px 0;
+}
+
+input,
+textarea,
+select{
+  width:100%;
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:10px;
+  background:#fff;
+  margin-top:5px;
+}
+
+textarea{
+  resize:vertical;
+}
+
+.check{
+  display:flex!important;
+  align-items:center;
+  gap:8px;
+}
+
+.check input{
+  width:auto;
+  margin:0;
+}
+
+/* 버튼 */
+
+.primary{
+  border:0;
+  background:var(--accent);
+  color:#fff;
+  padding:11px 16px;
+  border-radius:11px;
+}
+
+.secondary{
+  border:1px solid #ddd;
+  background:#fff;
+  padding:10px 14px;
+  border-radius:11px;
+}
+
+.danger{
+  color:var(--danger);
+  border:1px solid #ffd1d1;
+  background:#fff5f5;
+  padding:10px 14px;
+  border-radius:11px;
+}
+
+/* 모달 */
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:15px;
+  z-index:100;
+}
+
+.modal-box{
+  width:min(550px,100%);
+  max-height:90dvh;
+  overflow-y:auto;
+  background:#fff;
+  border-radius:20px;
+  padding:20px;
+}
+
+.modal-box h2{
+  margin-top:0;
+}
+
+.modal-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:18px;
+}
+
+.two{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+}
+
+.emoji-grid{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:7px;
+}
+
+.emoji-grid button{
+  font-size:27px;
+  border:0;
+  border-radius:10px;
+  background:#f7f7f7;
+  padding:8px 3px;
+}
+
+/* 갤러리 */
+
+.gallery{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:3px;
+}
+
+.gallery img{
+  width:100%;
+  aspect-ratio:1;
+  object-fit:cover;
+}
+
+/* 이미지 뷰어 */
+
+#viewer{
+  position:fixed;
+  inset:0;
+  z-index:300;
+  background:rgba(0,0,0,.94);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+#viewer img{
+  max-width:95%;
+  max-height:90%;
+  object-fit:contain;
+}
+
+.viewer-close{
+  position:absolute;
+  right:18px;
+  top:18px;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:0;
+  background:#333;
+  color:#fff;
+  font-size:24px;
+}
+
+/* 로딩 */
+
+.typing{
+  align-self:flex-start;
+  background:#fff;
+  padding:10px 13px;
+  border-radius:16px;
+  color:#888;
+}
+
+.status-ok{
+  color:#279348;
+  font-size:13px;
+}
+
+.status-error{
+  color:#d33;
+  font-size:13px;
+}
+
+@media(max-width:500px){
+  .two{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div id="app">
+
+<header class="main-header">
+  <h1 id="appTitle">나만의 AI 메신저</h1>
+  <button id="addFriendBtn" class="icon-btn">＋</button>
+</header>
+
+<section id="friendsView" class="view active"></section>
+<section id="chatsView" class="view"></section>
+<section id="galleryView" class="view"></section>
+<section id="settingsView" class="view"></section>
+
+<nav class="nav">
+  <button class="active" data-tab="friends">👥<br>친구</button>
+  <button data-tab="chats">💬<br>대화</button>
+  <button data-tab="gallery">🖼️<br>갤러리</button>
+  <button data-tab="settings">⚙️<br>설정</button>
+</nav>
+
+<!-- 채팅방 -->
+
+<section id="chatRoom" class="hidden">
+
+  <div class="chat-header">
+    <button id="backBtn" class="icon-btn">‹</button>
+
+    <div class="chat-title">
+      <strong id="chatName"></strong>
+      <small id="chatStatus"></small>
+    </div>
+
+    <button id="roomMenuBtn" class="icon-btn">≡</button>
+  </div>
+
+  <div id="messageList"></div>
+
+  <div class="composer">
+    <button id="plusBtn" class="icon-btn">＋</button>
+
+    <textarea
+      id="messageInput"
+      rows="1"
+      placeholder="메시지를 입력하세요"
+    ></textarea>
+
+    <button id="sendBtn" class="send">전송</button>
+  </div>
+
+</section>
+
+</div>
+
+<input
+  id="photoInput"
+  type="file"
+  accept="image/*"
+  class="hidden"
+>
+
+<!-- 친구 설정 -->
+
+<div id="friendModal" class="modal hidden">
+<div class="modal-box">
+
+<h2>친구 설정</h2>
+
+<input id="friendId" type="hidden">
+
+<label>
+이름
+<input id="friendName">
+</label>
+
+<label>
+상태 메시지
+<input id="friendStatus">
+</label>
+
+<div class="two">
+
+<label>
+나이
+<input id="friendAge">
+</label>
+
+<label>
+성별
+<input id="friendGender">
+</label>
+
+</div>
+
+<label>
+지역
+<input id="friendRegion">
+</label>
+
+<label>
+외형 고정 사항
+<textarea
+  id="friendAppearance"
+  rows="4"
+  placeholder="예: 동아시아 남성, 검은 중단발, 쌍꺼풀 없는 눈..."
+></textarea>
+</label>
+
+<label>
+의상 취향
+<textarea
+  id="friendOutfit"
+  rows="3"
+  placeholder="평소 좋아하는 옷 스타일"
+></textarea>
+</label>
+
+<label>
+성격 / 말투 / 관계 설정
+<textarea
+  id="friendPersona"
+  rows="6"
+  placeholder="예: 나를 형이라고 부르고 존댓말을 사용한다..."
+></textarea>
+</label>
+
+<label>
+대화 방식
+<select id="friendBubble">
+  <option value="split">카톡처럼 여러 말풍선</option>
+  <option value="long">한 번에 길게</option>
+</select>
+</label>
+
+<label class="check">
+<input id="friendAutoImage" type="checkbox">
+대화 중 자연스러울 때 사진 보내기
+</label>
+
+<label>
+AI 장기 기억
+<textarea
+  id="friendMemory"
+  rows="6"
+  placeholder="AI가 계속 기억해야 할 중요한 일"
+></textarea>
+</label>
+
+<div class="modal-actions">
+
+<button
+  class="secondary"
+  onclick="closeModal('friendModal')"
+>
+취소
+</button>
+
+<button
+  class="primary"
+  onclick="saveFriend()"
+>
+저장
+</button>
+
+</div>
+
+</div>
+</div>
+
+<!-- 채팅방 설정 -->
+
+<div id="roomModal" class="modal hidden">
+<div class="modal-box">
+
+<h2>채팅방 설정</h2>
+
+<label class="check">
+<input id="actionDescriptions" type="checkbox">
+행동 괄호 묘사
+</label>
+
+<label class="check">
+<input id="roomPaused" type="checkbox">
+톡 정지
+</label>
+
+<label>
+시간 흐름
+<select id="timeMode">
+  <option value="realtime">실시간</option>
+  <option value="accelerated">시간 가속</option>
+</select>
+</label>
+
+<label>
+기념일 이름
+<input id="ddayLabel">
+</label>
+
+<label>
+기념일 날짜
+<input id="ddayDate" type="date">
+</label>
+
+<div id="ddayText"></div>
+
+<br>
+
+<button
+  class="secondary"
+  onclick="editCurrentFriend()"
+>
+친구 상세 설정
+</button>
+
+<button
+  class="danger"
+  onclick="deleteCurrentFriend()"
+>
+친구 삭제
+</button>
+
+<div class="modal-actions">
+
+<button
+  class="secondary"
+  onclick="closeModal('roomModal')"
+>
+취소
+</button>
+
+<button
+  class="primary"
+  onclick="saveRoomSettings()"
+>
+저장
+</button>
+
+</div>
+
+</div>
+</div>
+
+<!-- + 메뉴 -->
+
+<div id="mediaModal" class="modal hidden">
+<div class="modal-box">
+
+<h2>보내기</h2>
+
+<button
+  class="secondary"
+  style="width:100%;margin-bottom:15px"
+  onclick="selectPhoto()"
+>
+📷 사진 보내기
+</button>
+
+<div id="emojiPicker" class="emoji-grid"></div>
+
+<div class="modal-actions">
+
+<button
+  class="secondary"
+  onclick="closeModal('mediaModal')"
+>
+닫기
+</button>
+
+</div>
+
+</div>
+</div>
+
+<!-- 이미지 뷰어 -->
+
+<div id="viewer" class="hidden">
+
+<button
+  class="viewer-close"
+  onclick="closeViewer()"
+>
+×
+</button>
+
+<img id="viewerImage">
+
+</div>
+
+<script>
+
+/* =========================
+   기본 상태
+========================= */
+
+const state = {
+
+  currentTab:"friends",
+
+  currentFriendId:null,
+
+  friends:load("friends",[]),
+
+  rooms:load("rooms",{}),
+
+  settings:load("settings",{
+
+    appName:"나만의 AI 메신저",
+
+    apiKey:"",
+
+    user:{
+      nickname:"나",
+      age:"",
+      region:"",
+      gender:""
+    },
+
+    globalPrompt:
+      "캐릭터 설정을 유지하며 실제 메신저처럼 자연스럽게 대화한다.",
+
+    emojis:
+      "😀 😆 😂 🥰 😳 😭 😤 ❤️ 🤍 👍 👀 ☕ 🌙 ✨ 😴 😘 🙈"
+
+  }),
+
+  messages:load("messages",{})
+
+};
+
+
+/* =========================
+   localStorage
+========================= */
+
+function load(key,fallback){
+
+  try{
+
+    const value=
+      localStorage.getItem("AI_MESSENGER_"+key);
+
+    return value
+      ? JSON.parse(value)
+      : fallback;
+
+  }catch{
+
+    return fallback;
+
+  }
+
+}
+
+
+function save(key,value){
+
+  localStorage.setItem(
+    "AI_MESSENGER_"+key,
+    JSON.stringify(value)
+  );
+
+}
+
+
+function saveAll(){
+
+  save("friends",state.friends);
+
+  save("rooms",state.rooms);
+
+  save("settings",state.settings);
+
+  save("messages",state.messages);
+
+}
+
+
+/* =========================
+   공통
+========================= */
+
+function uuid(){
+
+  return crypto.randomUUID();
+
+}
+
+
+function escapeHtml(text=""){
+
+  const div=document.createElement("div");
+
+  div.textContent=text;
+
+  return div.innerHTML;
+
+}
+
+
+function currentFriend(){
+
+  return state.friends.find(
+    f=>f.id===state.currentFriendId
+  );
+
+}
+
+
+function getMessages(friendId){
+
+  if(!state.messages[friendId])
+    state.messages[friendId]=[];
+
+  return state.messages[friendId];
+
+}
+
+
+function getRoom(friendId){
+
+  if(!state.rooms[friendId]){
+
+    state.rooms[friendId]={
+
+      actionDescriptions:true,
+
+      paused:false,
+
+      timeMode:"realtime",
+
+      ddayLabel:"",
+
+      ddayDate:""
+
+    };
+
+  }
+
+  return state.rooms[friendId];
+
+}
+
+
+function initials(name){
+
+  return (name||"?")
+    .trim()
+    .slice(0,2);
+
+}
+
+
+function formatTime(date){
+
+  return new Date(date)
+    .toLocaleTimeString(
+      "ko-KR",
+      {
+        hour:"2-digit",
+        minute:"2-digit"
+      }
+    );
+
+}
+
+
+function closeModal(id){
+
+  document
+    .getElementById(id)
+    .classList
+    .add("hidden");
+
+}
+
+
+/* =========================
+   탭
+========================= */
+
+document
+.querySelectorAll(".nav button")
+.forEach(btn=>{
+
+  btn.onclick=()=>{
+
+    setTab(
+      btn.dataset.tab
+    );
+
+  };
+
+});
+
+
+function setTab(tab){
+
+  state.currentTab=tab;
+
+  document
+  .querySelectorAll(".view")
+  .forEach(v=>v.classList.remove("active"));
+
+  document
+  .getElementById(tab+"View")
+  .classList
+  .add("active");
+
+  document
+  .querySelectorAll(".nav button")
+  .forEach(b=>{
+
+    b.classList.toggle(
+      "active",
+      b.dataset.tab===tab
+    );
+
+  });
+
+  document
+  .getElementById("addFriendBtn")
+  .style.visibility=
+    tab==="friends"
+    ?"visible"
+    :"hidden";
+
+  renderAll();
+
+}
+
+
+/* =========================
+   친구
+========================= */
+
+document
+.getElementById("addFriendBtn")
+.onclick=()=>openFriendModal();
+
+
+function renderFriends(){
+
+  const view=
+    document.getElementById("friendsView");
+
+  if(!state.friends.length){
+
+    view.innerHTML=
+      `<div class="empty">
+      오른쪽 위 + 버튼으로<br>
+      첫 AI 친구를 만들어보세요.
+      </div>`;
+
+    return;
+
+  }
+
+  view.innerHTML=
+    state.friends
+    .map(friend=>`
+
+    <div
+      class="friend-row"
+      onclick="openChat('${friend.id}')"
+    >
+
+      <div class="avatar">
+        ${
+          friend.avatar
+          ? `<img src="${friend.avatar}">`
+          : escapeHtml(initials(friend.name))
+        }
+      </div>
+
+      <div class="row-info">
+
+        <strong>
+          ${escapeHtml(friend.name)}
+        </strong>
+
+        <small>
+          ${escapeHtml(friend.status||"")}
+        </small>
+
+      </div>
+
+    </div>
+
+    `)
+    .join("");
+
+}
+
+
+function openFriendModal(id=null){
+
+  const friend=
+    id
+    ? state.friends.find(f=>f.id===id)
+    : null;
+
+  document.getElementById("friendId").value=
+    friend?.id||"";
+
+  document.getElementById("friendName").value=
+    friend?.name||"";
+
+  document.getElementById("friendStatus").value=
+    friend?.status||"";
+
+  document.getElementById("friendAge").value=
+    friend?.age||"";
+
+  document.getElementById("friendGender").value=
+    friend?.gender||"";
+
+  document.getElementById("friendRegion").value=
+    friend?.region||"";
+
+  document.getElementById("friendAppearance").value=
+    friend?.appearance||"";
+
+  document.getElementById("friendOutfit").value=
+    friend?.outfit||"";
+
+  document.getElementById("friendPersona").value=
+    friend?.persona||"";
+
+  document.getElementById("friendBubble").value=
+    friend?.bubbleStyle||"split";
+
+  document.getElementById("friendAutoImage").checked=
+    !!friend?.autoImage;
+
+  document.getElementById("friendMemory").value=
+    friend?.memory||"";
+
+  document
+  .getElementById("friendModal")
+  .classList
+  .remove("hidden");
+
+}
+
+
+function saveFriend(){
+
+  const name=
+    document.getElementById("friendName")
+    .value
+    .trim();
+
+  if(!name){
+
+    alert("친구 이름을 입력해주세요.");
+
+    return;
+
+  }
+
+  const id=
+    document.getElementById("friendId").value
+    || uuid();
+
+  const existing=
+    state.friends.find(f=>f.id===id)
+    || {};
+
+  const friend={
+
+    ...existing,
+
+    id,
+
+    name,
+
+    status:
+      document
+      .getElementById("friendStatus")
+      .value
+      .trim(),
+
+    age:
+      document
+      .getElementById("friendAge")
+      .value
+      .trim(),
+
+    gender:
+      document
+      .getElementById("friendGender")
+      .value
+      .trim(),
+
+    region:
+      document
+      .getElementById("friendRegion")
+      .value
+      .trim(),
+
+    appearance:
+      document
+      .getElementById("friendAppearance")
+      .value
+      .trim(),
+
+    outfit:
+      document
+      .getElementById("friendOutfit")
+      .value
+      .trim(),
+
+    persona:
+      document
+      .getElementById("friendPersona")
+      .value
+      .trim(),
+
+    bubbleStyle:
+      document
+      .getElementById("friendBubble")
+      .value,
+
+    autoImage:
+      document
+      .getElementById("friendAutoImage")
+      .checked,
+
+    memory:
+      document
+      .getElementById("friendMemory")
+      .value
+      .trim()
+
+  };
+
+
+  const index=
+    state.friends
+    .findIndex(f=>f.id===id);
+
+
+  if(index>=0)
+
+    state.friends[index]=friend;
+
+  else
+
+    state.friends.push(friend);
+
+
+  saveAll();
+
+  closeModal("friendModal");
+
+  renderAll();
+
+}
+
+
+function editCurrentFriend(){
+
+  closeModal("roomModal");
+
+  openFriendModal(
+    state.currentFriendId
+  );
+
+}
+
+
+async function deleteCurrentFriend(){
+
+  const friend=
+    currentFriend();
+
+  if(!friend)return;
+
+  if(!confirm(
+    `${friend.name}와의 모든 대화를 삭제할까요?`
+  )) return;
+
+
+  state.friends=
+    state.friends.filter(
+      f=>f.id!==friend.id
+    );
+
+
+  delete state.messages[friend.id];
+
+  delete state.rooms[friend.id];
+
+
+  saveAll();
+
+  closeModal("roomModal");
+
+  document
+  .getElementById("chatRoom")
+  .classList
+  .add("hidden");
+
+  state.currentFriendId=null;
+
+  renderAll();
+
+}
+
+
+/* =========================
+   채팅 목록
+========================= */
+
+function renderChats(){
+
+  const view=
+    document.getElementById("chatsView");
+
+  if(!state.friends.length){
+
+    view.innerHTML=
+      `<div class="empty">
+      아직 대화가 없습니다.
+      </div>`;
+
+    return;
+
+  }
+
+
+  const list=
+    state.friends
+    .map(friend=>{
+
+      const messages=
+        getMessages(friend.id);
+
+      const last=
+        messages[messages.length-1];
+
+      return `
+      <div
+        class="chat-row"
+        onclick="openChat('${friend.id}')"
+      >
+
+        <div class="avatar">
+          ${escapeHtml(initials(friend.name))}
+        </div>
+
+        <div class="row-info">
+
+          <strong>
+            ${escapeHtml(friend.name)}
+          </strong>
+
+          <small>
+            ${
+              last
+              ? escapeHtml(
+                  last.type==="image"
+                  ? "[사진]"
+                  : last.text
+                )
+              : "대화를 시작해보세요."
+            }
+          </small>
+
+        </div>
+
+      </div>
+      `;
+
+    });
+
+  view.innerHTML=list.join("");
+
+}
+
+
+/* =========================
+   채팅방
+========================= */
+
+async function openChat(friendId){
+
+  state.currentFriendId=
+    friendId;
+
+  const friend=
+    currentFriend();
+
+  document.getElementById("chatName")
+    .textContent=
+    friend.name;
+
+  document.getElementById("chatStatus")
+    .textContent=
+    friend.status||"";
+
+  document
+  .getElementById("chatRoom")
+  .classList
+  .remove("hidden");
+
+  renderMessages();
+
+}
+
+
+document
+.getElementById("backBtn")
+.onclick=()=>{
+
+  document
+  .getElementById("chatRoom")
+  .classList
+  .add("hidden");
+
+  state.currentFriendId=null;
+
+  renderChats();
+
+};
+
+
+function renderMessages(){
+
+  const friend=currentFriend();
+
+  if(!friend)return;
+
+  const messages=
+    getMessages(friend.id);
+
+  const list=
+    document.getElementById("messageList");
+
+
+  list.innerHTML=
+    messages
+    .map(message=>{
+
+      if(message.type==="image"){
+
+        return `
+        <div class="message ${
+          message.role==="user"
+          ?"mine"
+          :"ai"
+        }">
+
+          <img
+            src="${message.data}"
+            onclick="openViewer('${message.id}')"
+          >
+
+          <div class="time">
+            ${formatTime(message.time)}
+          </div>
+
+        </div>
+        `;
+
+      }
+
+
+      return `
+      <div class="message ${
+        message.role==="user"
+        ?"mine"
+        :"ai"
+      }">
+
+        ${escapeHtml(message.text)}
+
+        <div class="time">
+          ${formatTime(message.time)}
+        </div>
+
+      </div>
+      `;
+
+    })
+    .join("");
+
+
+  list.scrollTop=
+    list.scrollHeight;
+
+}
+
+
+/* =========================
+   사용자 메시지
+========================= */
+
+document
+.getElementById("sendBtn")
+.onclick=
+sendMessage;
+
+
+document
+.getElementById("messageInput")
+.addEventListener(
+  "keydown",
+  event=>{
+
+    if(
+      event.key==="Enter"
+      && !event.shiftKey
+    ){
+
+      event.preventDefault();
+
+      sendMessage();
+
+    }
+
+  }
+);
+
+
+async function sendMessage(){
+
+  const input=
+    document.getElementById("messageInput");
+
+  const text=
+    input.value.trim();
+
+  if(!text)return;
+
+  const friend=
+    currentFriend();
+
+  const room=
+    getRoom(friend.id);
+
+  if(room.paused){
+
+    alert(
+      "현재 이 채팅방은 톡 정지 상태입니다."
+    );
+
+    return;
+
+  }
+
+
+  if(!state.settings.apiKey){
+
+    alert(
+      "설정에서 Gemini API Key를 먼저 입력해주세요."
+    );
+
+    setTab("settings");
+
+    return;
+
+  }
+
+
+  getMessages(friend.id)
+  .push({
+
+    id:uuid(),
+
+    role:"user",
+
+    type:"text",
+
+    text,
+
+    time:new Date().toISOString()
+
+  });
+
+
+  input.value="";
+
+  saveAll();
+
+  renderMessages();
+
+  showTyping();
+
+
+  try{
+
+    const response=
+      await callGemini(friend,text);
+
+    removeTyping();
+
+
+    for(
+      const message
+      of response.messages
+    ){
+
+      getMessages(friend.id)
+      .push({
+
+        id:uuid(),
+
+        role:"assistant",
+
+        type:"text",
+
+        text:message,
+
+        time:new Date().toISOString()
+
+      });
+
+    }
+
+
+    saveAll();
+
+    renderMessages();
+
+
+    if(
+      friend.autoImage
+      && response.imagePrompt
+    ){
+
+      try{
+
+        await generateAIImage(
+          response.imagePrompt,
+          friend
+        );
+
+      }catch(error){
+
+        console.warn(
+          "이미지 생성 실패",
+          error
+        );
+
+      }
+
+    }
+
+
+    autoMemoryUpdate(friend);
+
+
+  }catch(error){
+
+    removeTyping();
+
+    console.error(error);
+
+    getMessages(friend.id)
+    .push({
+
+      id:uuid(),
+
+      role:"assistant",
+
+      type:"text",
+
+      text:
+        "지금은 답장을 가져오지 못했어요. API 키나 인터넷 연결을 확인해주세요.",
+
+      time:new Date().toISOString()
+
+    });
+
+    saveAll();
+
+    renderMessages();
+
+  }
+
+}
+
+
+/* =========================
+   Gemini 텍스트
+========================= */
+
+async function callGemini(
+  friend,
+  userText
+){
+
+  const key=
+    state.settings.apiKey;
+
+  const room=
+    getRoom(friend.id);
+
+  const history=
+    getMessages(friend.id)
+    .filter(m=>m.type==="text")
+    .slice(-35);
+
+
+  const conversation=
+    history
+    .map(message=>({
+
+      role:
+        message.role==="assistant"
+        ?"model"
+        :"user",
+
+      parts:[
+        {
+          text:message.text
+        }
+      ]
+
+    }));
+
+
+  const systemPrompt=`
+
+당신은 1:1 메신저 안에서 사용자와 대화하는 가상의 AI 캐릭터다.
+
+사용자는 AI라는 설명보다 자연스럽고 몰입감 있는 메신저 대화를 원한다.
+
+단, 현실 세계에서 실제로 하지 않은 일을 했다고 속이는 식으로 사실을 조작하지 않는다.
+
+========================
+[캐릭터]
+========================
+
+이름:
+${friend.name}
+
+나이:
+${friend.age||"미설정"}
+
+성별:
+${friend.gender||"미설정"}
+
+지역:
+${friend.region||"미설정"}
+
+상태 메시지:
+${friend.status||""}
+
+외형:
+${friend.appearance||""}
+
+의상 취향:
+${friend.outfit||""}
+
+성격 / 말투 / 관계:
+${friend.persona||""}
+
+========================
+[사용자]
+========================
+
+닉네임:
+${state.settings.user.nickname||"사용자"}
+
+나이:
+${state.settings.user.age||"미설정"}
+
+성별:
+${state.settings.user.gender||"미설정"}
+
+지역:
+${state.settings.user.region||"미설정"}
+
+========================
+[장기 기억]
+========================
+
+${friend.memory||"아직 저장된 장기 기억 없음"}
+
+========================
+[전역 규칙]
+========================
+
+${state.settings.globalPrompt||""}
+
+========================
+[현재 채팅방]
+========================
+
+행동 괄호 묘사:
+${room.actionDescriptions?"허용":"사용하지 않음"}
+
+시간 흐름:
+${room.timeMode}
+
+기념일:
+${room.ddayLabel||""}
+${room.ddayDate||""}
+
+말풍선 방식:
+${friend.bubbleStyle}
+
+자율 이미지:
+${friend.autoImage?"허용":"사용하지 않음"}
+
+========================
+
+반드시 다음 JSON 형식 하나만 출력한다.
+
+{
+  "messages":[
+    "첫 번째 말풍선",
+    "두 번째 말풍선"
+  ],
+  "imagePrompt":null
+}
+
+규칙:
+
+1.
+messages는 최소 1개,
+최대 5개이다.
+
+2.
+bubbleStyle이 split이면
+실제 카카오톡처럼 자연스럽게
+여러 말풍선으로 나눌 수 있다.
+
+3.
+bubbleStyle이 long이면
+가능하면 하나의 말풍선으로 답한다.
+
+4.
+"응?", "그래.", "알겠어."처럼
+대화를 끊는 지나치게 무성의한 단답만 하지 않는다.
+
+5.
+그러나 매번 장문으로 말할 필요도 없다.
+상황에 맞게 자연스럽게 말한다.
+
+6.
+행동 괄호 묘사가 허용된 경우에만
+필요할 때
+(웃으며 휴대폰을 내려다본다)
+같은 행동 묘사를 사용할 수 있다.
+
+7.
+자율 이미지가 허용되어 있고
+사진을 보내는 것이 매우 자연스러운 상황이면
+imagePrompt에 이미지 생성용 영어 프롬프트를 쓴다.
+
+8.
+사진이 필요하지 않다면
+imagePrompt는 반드시 null이다.
+
+9.
+JSON 외에
+설명이나 Markdown 코드 블록을
+절대 출력하지 않는다.
+
+`.trim();
+
+
+  const url=
+
+    "https://generativelanguage.googleapis.com/v1beta/models/"
+    +"gemini-3.7-flash:generateContent";
+
+
+  const response=
+    await fetch(url,{
+
+      method:"POST",
+
+      headers:{
+
+        "Content-Type":
+          "application/json",
+
+        "x-goog-api-key":
+          key
+
+      },
+
+      body:JSON.stringify({
+
+        systemInstruction:{
+
+          parts:[
+            {
+              text:systemPrompt
+            }
+          ]
+
+        },
+
+        contents:conversation,
+
+        generationConfig:{
+
+          temperature:0.9,
+
+          responseMimeType:
+            "application/json",
+
+          maxOutputTokens:1600
+
+        }
+
+      })
+
+    });
+
+
+  if(!response.ok){
+
+    const errorText=
+      await response.text();
+
+    throw new Error(
+      errorText
+    );
+
+  }
+
+
+  const data=
+    await response.json();
+
+
+  let text=
+
+    data
+    ?.candidates
+    ?.[0]
+    ?.content
+    ?.parts
+    ?.[0]
+    ?.text;
+
+
+  if(!text){
+
+    throw new Error(
+      "Gemini 응답 없음"
+    );
+
+  }
+
+
+  text=
+    text
+    .replace(/^```json/i,"")
+    .replace(/```$/i,"")
+    .trim();
+
+
+  let parsed;
+
+
+  try{
+
+    parsed=
+      JSON.parse(text);
+
+  }catch{
+
+    parsed={
+
+      messages:[text],
+
+      imagePrompt:null
+
+    };
+
+  }
+
+
+  if(
+    !Array.isArray(parsed.messages)
+    || !parsed.messages.length
+  ){
+
+    parsed.messages=[
+      "답장을 생성하지 못했어요."
+    ];
+
+  }
+
+
+  parsed.messages=
+    parsed.messages
+    .slice(0,5)
+    .map(v=>String(v));
+
+
+  return parsed;
+
+}
+
+
+/* =========================
+   AI 이미지
+========================= */
+
+async function generateAIImage(
+  imagePrompt,
+  friend
+){
+
+  const key=
+    state.settings.apiKey;
+
+
+  const prompt=`
+
+Create a natural fictional messenger photo.
+
+Character appearance:
+${friend.appearance||""}
+
+Character clothing preference:
+${friend.outfit||""}
+
+Current requested scene:
+${imagePrompt}
+
+Keep the same fictional character identity and appearance.
+
+Photorealistic unless the character settings explicitly request another style.
+
+No text.
+No watermark.
+No messaging UI.
+
+`.trim();
+
+
+  const url=
+
+    "https://generativelanguage.googleapis.com/v1beta/models/"
+    +"gemini-3.1-flash-image:generateContent";
+
+
+  const response=
+    await fetch(url,{
+
+      method:"POST",
+
+      headers:{
+
+        "Content-Type":
+          "application/json",
+
+        "x-goog-api-key":
+          key
+
+      },
+
+      body:JSON.stringify({
+
+        contents:[
+
+          {
+
+            role:"user",
+
+            parts:[
+              {
+                text:prompt
+              }
+            ]
+
+          }
+
+        ],
+
+        generationConfig:{
+
+          responseModalities:[
+            "TEXT",
+            "IMAGE"
+          ]
+
+        }
+
+      })
+
+    });
+
+
+  if(!response.ok){
+
+    throw new Error(
+      await response.text()
+    );
+
+  }
+
+
+  const data=
+    await response.json();
+
+
+  const parts=
+
+    data
+    ?.candidates
+    ?.[0]
+    ?.content
+    ?.parts
+    || [];
+
+
+  const imagePart=
+    parts.find(
+      part=>
+        part.inlineData
+        ?.data
+    );
+
+
+  if(!imagePart){
+
+    throw new Error(
+      "이미지가 반환되지 않았습니다."
+    );
+
+  }
+
+
+  const mime=
+
+    imagePart.inlineData.mimeType
+    || "image/png";
+
+
+  const image=
+
+    `data:${mime};base64,`
+    +imagePart.inlineData.data;
+
+
+  getMessages(friend.id)
+  .push({
+
+    id:uuid(),
+
+    role:"assistant",
+
+    type:"image",
+
+    data:image,
+
+    time:new Date().toISOString()
+
+  });
+
+
+  saveAll();
+
+  renderMessages();
+
+}
+
+
+/* =========================
+   타이핑
+========================= */
+
+function showTyping(){
+
+  const list=
+    document.getElementById("messageList");
+
+  const div=
+    document.createElement("div");
+
+  div.id="typing";
+
+  div.className="typing";
+
+  div.textContent="답장 중...";
+
+  list.appendChild(div);
+
+  list.scrollTop=
+    list.scrollHeight;
+
+}
+
+
+function removeTyping(){
+
+  document
+  .getElementById("typing")
+  ?.remove();
+
+}
+
+
+/* =========================
+   자동 기억 요약
+========================= */
+
+async function autoMemoryUpdate(friend){
+
+  const messages=
+    getMessages(friend.id)
+    .filter(m=>m.type==="text");
+
+
+  if(
+    messages.length===0
+    || messages.length%20!==0
+  ) return;
+
+
+  try{
+
+    const key=
+      state.settings.apiKey;
+
+
+    const recent=
+      messages
+      .slice(-40)
+      .map(m=>
+        `${
+          m.role==="assistant"
+          ?friend.name
+          :state.settings.user.nickname
+        }: ${m.text}`
+      )
+      .join("\n");
+
+
+    const prompt=`
+
+당신은 AI 캐릭터 메신저의 장기 기억 관리자다.
+
+다음 정보를 바탕으로
+앞으로 캐릭터가 기억하면 좋은 내용을
+한국어 1200자 이내로 정리한다.
+
+기존 기억:
+
+${friend.memory||"없음"}
+
+최근 대화:
+
+${recent}
+
+중요하게 남길 것:
+
+- 서로의 관계 변화
+- 약속
+- 취향
+- 반복적으로 등장한 중요한 사실
+- 함께 있었던 중요한 사건
+- 다음 대화에서 자연스럽게 이어질 서사
+
+단순한 인사나 일회성 잡담은 제외한다.
+
+요약문만 출력한다.
+
+`.trim();
+
+
+    const url=
+
+      "https://generativelanguage.googleapis.com/v1beta/models/"
+      +"gemini-3.7-flash:generateContent";
+
+
+    const response=
+      await fetch(url,{
+
+        method:"POST",
+
+        headers:{
+
+          "Content-Type":
+            "application/json",
+
+          "x-goog-api-key":
+            key
+
+        },
+
+        body:JSON.stringify({
+
+          contents:[
+
+            {
+
+              role:"user",
+
+              parts:[
+                {
+                  text:prompt
+                }
+              ]
+
+            }
+
+          ],
+
+          generationConfig:{
+
+            temperature:0.25,
+
+            maxOutputTokens:1000
+
+          }
+
+        })
+
+      });
+
+
+    if(!response.ok)return;
+
+
+    const data=
+      await response.json();
+
+
+    const summary=
+
+      data
+      ?.candidates
+      ?.[0]
+      ?.content
+      ?.parts
+      ?.[0]
+      ?.text;
+
+
+    if(summary){
+
+      friend.memory=
+        summary.trim();
+
+      saveAll();
+
+    }
+
+
+  }catch(error){
+
+    console.warn(
+      "기억 요약 실패",
+      error
+    );
+
+  }
+
+}
+
+
+/* =========================
+   채팅방 설정
+========================= */
+
+document
+.getElementById("roomMenuBtn")
+.onclick=()=>{
+
+  const room=
+    getRoom(
+      state.currentFriendId
+    );
+
+
+  document
+  .getElementById("actionDescriptions")
+  .checked=
+    room.actionDescriptions;
+
+
+  document
+  .getElementById("roomPaused")
+  .checked=
+    room.paused;
+
+
+  document
+  .getElementById("timeMode")
+  .value=
+    room.timeMode;
+
+
+  document
+  .getElementById("ddayLabel")
+  .value=
+    room.ddayLabel;
+
+
+  document
+  .getElementById("ddayDate")
+  .value=
+    room.ddayDate;
+
+
+  updateDday();
+
+
+  document
+  .getElementById("roomModal")
+  .classList
+  .remove("hidden");
+
+};
+
+
+function saveRoomSettings(){
+
+  const room=
+    getRoom(
+      state.currentFriendId
+    );
+
+
+  room.actionDescriptions=
+
+    document
+    .getElementById("actionDescriptions")
+    .checked;
+
+
+  room.paused=
+
+    document
+    .getElementById("roomPaused")
+    .checked;
+
+
+  room.timeMode=
+
+    document
+    .getElementById("timeMode")
+    .value;
+
+
+  room.ddayLabel=
+
+    document
+    .getElementById("ddayLabel")
+    .value;
+
+
+  room.ddayDate=
+
+    document
+    .getElementById("ddayDate")
+    .value;
+
+
+  saveAll();
+
+  closeModal("roomModal");
+
+}
+
+
+document
+.getElementById("ddayDate")
+.onchange=
+updateDday;
+
+
+function updateDday(){
+
+  const date=
+    document
+    .getElementById("ddayDate")
+    .value;
+
+
+  const target=
+    document
+    .getElementById("ddayText");
+
+
+  if(!date){
+
+    target.textContent="";
+
+    return;
+
+  }
+
+
+  const today=
+    new Date();
+
+  today.setHours(
+    0,0,0,0
+  );
+
+
+  const eventDate=
+    new Date(
+      date+"T00:00:00"
+    );
+
+
+  const days=
+    Math.round(
+      (eventDate-today)
+      /86400000
+    );
+
+
+  if(days===0)
+
+    target.textContent="D-DAY";
+
+  else if(days>0)
+
+    target.textContent=
+      "D-"+days;
+
+  else
+
+    target.textContent=
+      "D+"+Math.abs(days);
+
+}
+
+
+/* =========================
+   사진 / 이모티콘
+========================= */
+
+document
+.getElementById("plusBtn")
+.onclick=()=>{
+
+  renderEmojiPicker();
+
+  document
+  .getElementById("mediaModal")
+  .classList
+  .remove("hidden");
+
+};
+
+
+function selectPhoto(){
+
+  document
+  .getElementById("photoInput")
+  .click();
+
+}
+
+
+document
+.getElementById("photoInput")
+.onchange=
+async event=>{
+
+  const file=
+    event.target.files[0];
+
+  if(!file)return;
+
+
+  if(file.size>6*1024*1024){
+
+    alert(
+      "사진 크기는 6MB 이하를 권장합니다."
+    );
+
+    return;
+
+  }
+
+
+  const data=
+    await fileToDataURL(file);
+
+
+  const friend=
+    currentFriend();
+
+
+  getMessages(friend.id)
+  .push({
+
+    id:uuid(),
+
+    role:"user",
+
+    type:"image",
+
+    data,
+
+    time:new Date().toISOString()
+
+  });
+
+
+  saveAll();
+
+  closeModal("mediaModal");
+
+  renderMessages();
+
+  event.target.value="";
+
+};
+
+
+function fileToDataURL(file){
+
+  return new Promise(
+    (resolve,reject)=>{
+
+      const reader=
+        new FileReader();
+
+      reader.onload=
+        ()=>resolve(reader.result);
+
+      reader.onerror=
+        reject;
+
+      reader.readAsDataURL(file);
+
+    }
+  );
+
+}
+
+
+function renderEmojiPicker(){
+
+  const container=
+    document
+    .getElementById("emojiPicker");
+
+
+  const emojis=
+    state.settings.emojis
+    .split(/[\s,]+/)
+    .filter(Boolean);
+
+
+  container.innerHTML=
+    emojis
+    .map(emoji=>`
+
+    <button
+      onclick="sendEmoji('${emoji}')"
+    >
+      ${emoji}
+    </button>
+
+    `)
+    .join("");
+
+}
+
+
+function sendEmoji(emoji){
+
+  const friend=
+    currentFriend();
+
+
+  getMessages(friend.id)
+  .push({
+
+    id:uuid(),
+
+    role:"user",
+
+    type:"text",
+
+    text:emoji,
+
+    time:new Date().toISOString()
+
+  });
+
+
+  saveAll();
+
+  closeModal("mediaModal");
+
+  renderMessages();
+
+}
+
+
+/* =========================
+   갤러리
+========================= */
+
+function renderGallery(){
+
+  const images=[];
+
+
+  for(const friend of state.friends){
+
+    for(
+      const message
+      of getMessages(friend.id)
+    ){
+
+      if(message.type==="image"){
+
+        images.push({
+
+          ...message,
+
+          friendId:friend.id
+
+        });
+
+      }
+
+    }
+
+  }
+
+
+  images.sort(
+    (a,b)=>
+      new Date(b.time)
+      -new Date(a.time)
+  );
+
+
+  const view=
+    document
+    .getElementById("galleryView");
+
+
+  if(!images.length){
+
+    view.innerHTML=
+
+      `<div class="empty">
+      주고받은 사진이<br>
+      여기에 자동으로 모입니다.
+      </div>`;
+
+    return;
+
+  }
+
+
+  view.innerHTML=
+
+    `<div class="gallery">
+
+    ${
+      images
+      .map(image=>`
+
+      <img
+        src="${image.data}"
+        onclick="openGalleryImage('${image.friendId}','${image.id}')"
+      >
+
+      `)
+      .join("")
+    }
+
+    </div>`;
+
+}
+
+
+function openGalleryImage(
+  friendId,
+  messageId
+){
+
+  const message=
+    getMessages(friendId)
+    .find(
+      m=>m.id===messageId
+    );
+
+
+  if(!message)return;
+
+
+  document
+  .getElementById("viewerImage")
+  .src=
+    message.data;
+
+
+  document
+  .getElementById("viewer")
+  .classList
+  .remove("hidden");
+
+}
+
+
+function openViewer(messageId){
+
+  const message=
+    getMessages(
+      state.currentFriendId
+    )
+    .find(
+      m=>m.id===messageId
+    );
+
+
+  if(!message)return;
+
+
+  document
+  .getElementById("viewerImage")
+  .src=
+    message.data;
+
+
+  document
+  .getElementById("viewer")
+  .classList
+  .remove("hidden");
+
+}
+
+
+function closeViewer(){
+
+  document
+  .getElementById("viewer")
+  .classList
+  .add("hidden");
+
+}
+
+
+/* =========================
+   설정
+========================= */
+
+function renderSettings(){
+
+  const settings=
+    state.settings;
+
+
+  const view=
+    document
+    .getElementById("settingsView");
+
+
+  view.innerHTML=`
+
+  <div class="card">
+
+    <h3>🔑 Gemini API</h3>
+
+    <label>
+    Gemini API Key
+
+    <input
+      id="settingApiKey"
+      type="password"
+      value="${escapeHtml(settings.apiKey)}"
+      placeholder="AIza..."
+    >
+
+    </label>
+
+    <button
+      class="secondary"
+      onclick="testApiKey()"
+    >
+      API 연결 테스트
+    </button>
+
+    <div
+      id="apiStatus"
+      style="margin-top:10px"
+    ></div>
+
+  </div>
+
+
+  <div class="card">
+
+    <h3>📱 앱 설정</h3>
+
+    <label>
+    앱 이름
+
+    <input
+      id="settingAppName"
+      value="${escapeHtml(settings.appName)}"
+    >
+
+    </label>
+
+  </div>
+
+
+  <div class="card">
+
+    <h3>🙋 내 정보</h3>
+
+    <label>
+    닉네임
+    <input
+      id="settingNickname"
+      value="${escapeHtml(settings.user.nickname)}"
+    >
+    </label>
+
+    <label>
+    나이
+    <input
+      id="settingAge"
+      value="${escapeHtml(settings.user.age)}"
+    >
+    </label>
+
+    <label>
+    지역
+    <input
+      id="settingRegion"
+      value="${escapeHtml(settings.user.region)}"
+    >
+    </label>
+
+    <label>
+    성별
+    <input
+      id="settingGender"
+      value="${escapeHtml(settings.user.gender)}"
+    >
+    </label>
+
+  </div>
+
+
+  <div class="card">
+
+    <h3>🤖 AI 공통 규칙</h3>
+
+    <textarea
+      id="settingGlobalPrompt"
+      rows="8"
+    >${escapeHtml(settings.globalPrompt)}</textarea>
+
+  </div>
+
+
+  <div class="card">
+
+    <h3>😊 이모티콘</h3>
+
+    <textarea
+      id="settingEmojis"
+      rows="4"
+    >${escapeHtml(settings.emojis)}</textarea>
+
+  </div>
+
+
+  <button
+    class="primary"
+    style="width:100%"
+    onclick="saveSettings()"
+  >
+    설정 저장
+  </button>
+
+  `;
+
+}
+
+
+function saveSettings(){
+
+  state.settings.apiKey=
+
+    document
+    .getElementById("settingApiKey")
+    .value
+    .trim();
+
+
+  state.settings.appName=
+
+    document
+    .getElementById("settingAppName")
+    .value
+    .trim()
+    ||"나만의 AI 메신저";
+
+
+  state.settings.user={
+
+    nickname:
+
+      document
+      .getElementById("settingNickname")
+      .value
+      .trim(),
+
+    age:
+
+      document
+      .getElementById("settingAge")
+      .value
+      .trim(),
+
+    region:
+
+      document
+      .getElementById("settingRegion")
+      .value
+      .trim(),
+
+    gender:
+
+      document
+      .getElementById("settingGender")
+      .value
+      .trim()
+
+  };
+
+
+  state.settings.globalPrompt=
+
+    document
+    .getElementById("settingGlobalPrompt")
+    .value;
+
+
+  state.settings.emojis=
+
+    document
+    .getElementById("settingEmojis")
+    .value;
+
+
+  saveAll();
+
+  document.title=
+    state.settings.appName;
+
+  document
+  .getElementById("appTitle")
+  .textContent=
+    state.settings.appName;
+
+
+  alert(
+    "설정을 저장했습니다."
+  );
+
+}
+
+
+async function testApiKey(){
+
+  saveSettingsSilently();
+
+
+  const status=
+    document
+    .getElementById("apiStatus");
+
+
+  status.className="";
+
+  status.textContent=
+    "연결 확인 중...";
+
+
+  try{
+
+    const url=
+
+      "https://generativelanguage.googleapis.com/v1beta/models/"
+      +"gemini-3.7-flash:generateContent";
+
+
+    const response=
+      await fetch(url,{
+
+        method:"POST",
+
+        headers:{
+
+          "Content-Type":
+            "application/json",
+
+          "x-goog-api-key":
+            state.settings.apiKey
+
+        },
+
+        body:JSON.stringify({
+
+          contents:[
+
+            {
+
+              role:"user",
+
+              parts:[
+                {
+                  text:"OK라고만 답해."
+                }
+              ]
+
+            }
+
+          ]
+
+        })
+
+      });
+
+
+    if(!response.ok){
+
+      throw new Error(
+        await response.text()
+      );
+
+    }
+
+
+    status.className=
+      "status-ok";
+
+    status.textContent=
+      "✓ Gemini 연결 성공";
+
+
+  }catch(error){
+
+    console.error(error);
+
+    status.className=
+      "status-error";
+
+    status.textContent=
+      "연결 실패 — API Key를 확인해주세요.";
+
+  }
+
+}
+
+
+function saveSettingsSilently(){
+
+  const api=
+    document
+    .getElementById("settingApiKey");
+
+  if(api){
+
+    state.settings.apiKey=
+      api.value.trim();
+
+  }
+
+  saveAll();
+
+}
+
+
+/* =========================
+   전체 렌더
+========================= */
+
+function renderAll(){
+
+  document.title=
+    state.settings.appName;
+
+
+  document
+  .getElementById("appTitle")
+  .textContent=
+    state.settings.appName;
+
+
+  renderFriends();
+
+  renderChats();
+
+  renderGallery();
+
+  renderSettings();
+
+}
+
+
+/* =========================
+   시작
+========================= */
+
+renderAll();
+
+</script>
+
+</body>
+</html>
